@@ -2,7 +2,7 @@ import { Home, Clock, QrCode, FileText, User } from "lucide-react";
 
 export default function BottomNavigation() {
   return (
-    <div className="absolute bottom-0 w-full bg-white flex justify-between items-end px-6 py-4 rounded-t-[30px] shadow-[0_-10px_40px_rgb(0,0,0,0.08)]">
+    <div className="fixed bottom-0 max-w-md z-9999 w-full bg-white flex justify-between items-end px-6 py-4 rounded-t-[30px] shadow-[0_-10px_40px_rgb(0,0,0,0.08)]">
       <div className="flex flex-col items-center gap-1 cursor-pointer">
         <Home size={24} className="text-emerald-600" />
         <span className="text-[10px] text-emerald-600 font-medium">Home</span>
