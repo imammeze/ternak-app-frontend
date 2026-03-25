@@ -1,6 +1,19 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useAuthStore } from "@/store/authStore";
 
 export default function Header() {
+  const { user, isAuthenticated } = useAuthStore();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const displayName = isClient && isAuthenticated && user ? user.name : "Tamu";
+
   return (
     <div className="relative w-full h-[320px] overflow-hidden">
       <Image
@@ -9,6 +22,7 @@ export default function Header() {
         fill
         className="object-cover"
         priority
+        sizes="100vw"
       />
 
       <div className="absolute inset-0 bg-linear-to-b from-black/60 via-black/10 to-transparent z-10"></div>
@@ -16,7 +30,7 @@ export default function Header() {
       <div className="relative z-20 pt-10 px-6 h-full flex flex-col justify-between pb-24">
         <div className="flex items-center justify-center text-white drop-shadow-md">
           <div className="text-center">
-            <h1 className="text-xl font-bold">Halo, Admin</h1>
+            <h1 className="text-xl font-bold">Halo, {displayName}</h1>
             <p className="text-xs opacity-90 font-medium">
               Sistem Manajemen Peternakan
             </p>
