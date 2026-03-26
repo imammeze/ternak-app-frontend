@@ -56,7 +56,7 @@ export default function ActionMenu() {
 
       {hasPermission("akses menu produksi susu") && (
         <Link
-          href="/input-data/produksi"
+          href="/data-susu"
           className="bg-white p-5 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center justify-center gap-3 border border-gray-100 hover:border-emerald-200 transition-all cursor-pointer">
           <Milk size={32} className="text-emerald-600 stroke-[1.5]" />
           <span className="text-sm font-medium text-gray-700 text-center">
@@ -67,7 +67,7 @@ export default function ActionMenu() {
 
       {hasPermission("akses menu data ternak") && (
         <Link
-          href="/input-data/ternak"
+          href="/data-ternak"
           className="bg-white p-5 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center justify-center gap-3 border border-gray-100 hover:border-emerald-200 transition-all cursor-pointer">
           <ShieldQuestion size={32} className="text-emerald-600 stroke-[1.5]" />
           <span className="text-sm font-medium text-gray-700 text-center">
