@@ -3,19 +3,55 @@
 import { useEffect, useState } from "react";
 import { User } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
+import api from "@/lib/axios";
 
 export default function ProfileStats() {
   const { user, isAuthenticated } = useAuthStore();
   const [isClient, setIsClient] = useState(false);
 
+  const [userCount, setUserCount] = useState<number | string>("...");
+  const [ternakCount, setTernakCount] = useState<number | string>("...");
+  const [susuTotal, setSusuTotal] = useState<number | string>("...");
+
   useEffect(() => {
     setIsClient(true);
-  }, []);
+
+    const fetchDashboardData = async () => {
+      try {
+        const role = user?.roles?.[0]?.name.toLowerCase();
+
+        if (role === "admin") {
+          const resUsers = await api.get("/api/users");
+          setUserCount(resUsers.data.users.length);
+        }
+
+        if (role === "admin" || role === "manager" || role === "stakeholder") {
+          const resTernak = await api.get("/api/ternak");
+          setTernakCount(resTernak.data.data.length);
+
+          const resSusu = await api.get("/api/produksi-susu");
+          const daftarSusu = resSusu.data.data;
+          const totalLiter = daftarSusu.reduce((acc: number, curr: any) => {
+            return acc + Number(curr.total_liter);
+          }, 0);
+          setSusuTotal(parseFloat(totalLiter.toFixed(2)));
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data dashboard:", error);
+        setUserCount("?");
+        setTernakCount("?");
+        setSusuTotal("?");
+      }
+    };
+
+    if (isAuthenticated) {
+      fetchDashboardData();
+    }
+  }, [isAuthenticated, user]);
 
   if (!isClient) return null;
 
   const roleName = user?.roles?.[0]?.name.toLowerCase() || "guest";
-
   const formattedRole = roleName.charAt(0).toUpperCase() + roleName.slice(1);
 
   const StatCard = ({
@@ -44,17 +80,17 @@ export default function ProfileStats() {
       case "admin":
         return (
           <>
-            <StatCard title="Ternak" value="120" />
-            <StatCard title="Susu" value="45" unit="L" />
-            <StatCard title="User" value="6" />
+            <StatCard title="Ternak" value={ternakCount} />
+            <StatCard title="Susu" value={susuTotal} unit="L" />{" "}
+            <StatCard title="User" value={userCount} />
           </>
         );
 
       case "manager":
         return (
           <>
-            <StatCard title="Ternak" value="120" />
-            <StatCard title="Susu" value="45" unit="L" />
+            <StatCard title="Ternak" value={ternakCount} />
+            <StatCard title="Susu" value={susuTotal} unit="L" />{" "}
             <StatCard title="Stock Susu" value="15" unit="L" />
           </>
         );
@@ -62,8 +98,8 @@ export default function ProfileStats() {
       case "stakeholder":
         return (
           <>
-            <StatCard title="Ternak (Milikku)" value="30" />
-            <StatCard title="Susu (Milikku)" value="12" unit="L" />
+            <StatCard title="Ternak (Milikku)" value={ternakCount} />
+            <StatCard title="Susu (Milikku)" value={susuTotal} unit="L" />{" "}
             <StatCard title="Omset" value="4.5" unit="Jt" />
           </>
         );
@@ -96,7 +132,6 @@ export default function ProfileStats() {
           </p>
         </div>
       </div>
-
       <div className="flex justify-between gap-3">{renderStatsByRole()}</div>
     </div>
   );
