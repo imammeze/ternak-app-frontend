@@ -1,10 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, UploadCloud } from "lucide-react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import {
+  ChevronLeft,
+  UploadCloud,
+  AlertCircle,
+  CheckCircle2,
+  ChevronRight,
+} from "lucide-react";
+import api from "@/lib/axios";
+import FormInput from "@/features/inputan/ternak/components/FormInput";
+import FormSelect from "@/features/inputan/ternak/components/FormSelect";
 
 export default function InputTernakPage() {
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     id_ternak: "",
     nama_ternak: "",
@@ -12,6 +25,7 @@ export default function InputTernakPage() {
     jenis_kelamin: "Jantan",
     no_kandang: "",
     kepemilikan: "Milik Sendiri",
+    user_id: "",
     asal_usul: "Beli",
     harga_beli: "",
     tanggal_lahir: "",
@@ -23,265 +37,300 @@ export default function InputTernakPage() {
   });
 
   const [foto, setFoto] = useState<File | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string[]>
+  >({});
+  const [stakeholders, setStakeholders] = useState<
+    { id: string; name: string }[]
+  >([]);
+
+  useEffect(() => {
+    const fetchStakeholders = async () => {
+      try {
+        const response = await api.get("/api/users");
+        const stakeholderList = response.data.users.filter((u: any) =>
+          u.roles?.some((r: any) => r.name.toLowerCase() === "stakeholder"),
+        );
+        setStakeholders(stakeholderList);
+      } catch (err) {
+        console.error("Gagal memuat daftar stakeholder:", err);
+      }
+    };
+    fetchStakeholders();
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (validationErrors[name])
+      setValidationErrors((prev) => ({ ...prev, [name]: [] }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setFoto(e.target.files[0]);
+      if (validationErrors["foto"])
+        setValidationErrors((prev) => ({ ...prev, foto: [] }));
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+    setValidationErrors({});
 
     const submitData = new FormData();
     Object.entries(formData).forEach(([key, value]) => {
-      submitData.append(key, value);
+      if (
+        formData.asal_usul === "Beli" &&
+        [
+          "tanggal_lahir",
+          "berat_lahir",
+          "id_induk",
+          "id_pejantan",
+          "tipe_kelahiran",
+        ].includes(key)
+      )
+        return;
+      if (formData.asal_usul === "Lahir" && key === "harga_beli") return;
+      if (formData.kepemilikan === "Milik Sendiri" && key === "user_id") return;
+
+      if (value !== "") submitData.append(key, value);
     });
 
-    if (foto) {
-      submitData.append("foto", foto);
-    }
+    if (foto) submitData.append("foto", foto);
 
-    console.log("Data Form Siap Dikirim:", formData);
-    console.log("File Foto:", foto);
-    alert("Cek Console Browser untuk melihat data form!");
+    try {
+      await api.get("/sanctum/csrf-cookie");
+      await api.post("/api/ternak", submitData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      toast.success("Data ternak berhasil disimpan!");
+      router.push("/input-data");
+    } catch (err: any) {
+      if (err.response?.status === 422) {
+        setErrorMsg("Terdapat kesalahan pada isian form Anda.");
+        setValidationErrors(err.response.data.errors);
+      } else {
+        setErrorMsg(
+          err.response?.status === 403
+            ? "Akses ditolak."
+            : "Terjadi kesalahan server.",
+        );
+      }
+      setIsLoading(false);
+    }
   };
 
   return (
     <>
-      <div className="flex items-center justify-between px-6 pt-10 pb-4 bg-slate-50 text-emerald-900">
-        <Link href="/input-data" className="cursor-pointer">
+      <div className="flex items-center justify-between px-6 pt-10 pb-4 bg-emerald-600 text-white z-10 sticky top-0 shadow-sm">
+        <Link
+          href="/input-data"
+          className="cursor-pointer bg-white/20 p-2 rounded-full backdrop-blur-md hover:bg-white/30 transition-colors">
           <ChevronLeft size={24} />
         </Link>
-        <h1 className="text-lg font-semibold">Input Ternak</h1>
-        <div className="w-6"></div>
+        <h1 className="text-lg font-bold tracking-wide">Input Ternak</h1>
+        <div className="w-10"></div>
       </div>
 
-      <div className="flex-1 bg-slate-50 px-6 pt-2 pb-32 overflow-y-auto">
+      <div className="flex-1 bg-slate-50 px-6 pt-6 pb-32 overflow-y-auto">
+        {errorMsg && (
+          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 text-rose-700">
+            <AlertCircle size={24} className="text-rose-500 shrink-0" />
+            <p className="font-semibold text-sm">{errorMsg}</p>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex items-center justify-between border border-gray-200 rounded-xl p-3 relative">
-            <span className="text-sm text-gray-600">ID Ternak</span>
-            <input
-              type="text"
-              name="id_ternak"
-              value={formData.id_ternak}
-              onChange={handleChange}
-              placeholder="Masukkan ID Ternak"
-              className="text-sm font-medium text-gray-800 text-right outline-none w-48 bg-transparent"
-            />
-          </div>
+          <FormInput
+            label="ID Ternak"
+            name="id_ternak"
+            value={formData.id_ternak}
+            onChange={handleChange}
+            error={validationErrors.id_ternak}
+            placeholder="Masukkan ID"
+            required
+          />
+          <FormInput
+            label="Nama Ternak"
+            name="nama_ternak"
+            value={formData.nama_ternak}
+            onChange={handleChange}
+            error={validationErrors.nama_ternak}
+            placeholder="Masukkan Nama"
+            required
+          />
 
-          <div className="flex items-center justify-between border border-gray-200 rounded-xl p-3 relative">
-            <span className="text-sm text-gray-600">Nama Ternak</span>
-            <input
-              type="text"
-              name="nama_ternak"
-              value={formData.nama_ternak}
-              onChange={handleChange}
-              placeholder="Masukkan nama ternak"
-              className="text-sm font-medium text-gray-800 text-right outline-none w-48 bg-transparent"
-            />
-          </div>
+          <FormSelect
+            label="Jenis Ternak"
+            name="jenis_ternak"
+            value={formData.jenis_ternak}
+            onChange={handleChange}
+            options={["Sapera", "Sanen", "Etawa", "Jawa Randu"]}
+          />
+          <FormSelect
+            label="Jenis Kelamin"
+            name="jenis_kelamin"
+            value={formData.jenis_kelamin}
+            onChange={handleChange}
+            options={["Jantan", "Betina"]}
+          />
+          <FormInput
+            label="No Kandang"
+            name="no_kandang"
+            value={formData.no_kandang}
+            onChange={handleChange}
+            placeholder="Contoh: A02"
+            width="w-24"
+          />
+          <FormSelect
+            label="Kepemilikan"
+            name="kepemilikan"
+            value={formData.kepemilikan}
+            onChange={handleChange}
+            options={["Milik Sendiri", "Titipan"]}
+          />
 
-          <div className="flex items-center justify-between border border-gray-200 rounded-xl p-3 relative">
-            <span className="text-sm text-gray-600">Jenis Ternak</span>
-            <select
-              name="jenis_ternak"
-              value={formData.jenis_ternak}
-              onChange={handleChange}
-              className="appearance-none bg-transparent text-sm font-medium text-gray-800 text-center pr-6 outline-none cursor-pointer z-10">
-              <option value="Sapera">Sapera</option>
-              <option value="Sanen">Sanen</option>
-              <option value="Etawa">Etawa</option>
-              <option value="Jawa Randu">Jawa Randu</option>
-            </select>
-            <ChevronRight
-              size={16}
-              className="text-gray-400 absolute right-3"
-            />
-          </div>
+          {formData.kepemilikan === "Titipan" && (
+            <div
+              className={`flex items-center justify-between border ${validationErrors.user_id ? "border-rose-400 bg-rose-50" : "border-gray-200 bg-white"} rounded-xl p-3 relative shadow-sm animate-in fade-in slide-in-from-top-2 duration-300`}>
+              <span className="text-sm text-gray-600">
+                Pemilik <span className="text-rose-500">*</span>
+              </span>
+              <select
+                name="user_id"
+                value={formData.user_id}
+                onChange={handleChange}
+                className="appearance-none bg-transparent text-sm font-medium text-gray-800 text-center outline-none cursor-pointer z-10 w-48 truncate">
+                <option value="" disabled>
+                  -- Pilih Nama --
+                </option>
+                {stakeholders.map((stakeholder) => (
+                  <option key={stakeholder.id} value={stakeholder.id}>
+                    {stakeholder.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronRight
+                size={16}
+                className="text-gray-400 absolute right-3"
+              />
+            </div>
+          )}
+          {validationErrors.user_id && formData.kepemilikan === "Titipan" && (
+            <p className="text-xs text-rose-500 ml-1">
+              {validationErrors.user_id[0]}
+            </p>
+          )}
 
-          <div className="flex items-center justify-between border border-gray-200 rounded-xl p-3 relative">
-            <span className="text-sm text-gray-600">Jenis Kelamin</span>
-            <select
-              name="jenis_kelamin"
-              value={formData.jenis_kelamin}
-              onChange={handleChange}
-              className="appearance-none bg-transparent text-sm font-medium text-gray-800 text-center pr-6 outline-none cursor-pointer z-10">
-              <option value="Jantan">Jantan</option>
-              <option value="Betina">Betina</option>
-            </select>
-            <ChevronRight
-              size={16}
-              className="text-gray-400 absolute right-3"
-            />
-          </div>
+          <FormSelect
+            label="Asal Usul"
+            name="asal_usul"
+            value={formData.asal_usul}
+            onChange={handleChange}
+            options={["Beli", "Lahir"]}
+          />
 
-          <div className="flex items-center justify-between border border-gray-200 rounded-xl p-3 relative">
-            <span className="text-sm text-gray-600">No Kandang</span>
-            <input
-              type="text"
-              name="no_kandang"
-              value={formData.no_kandang}
-              onChange={handleChange}
-              placeholder="Contoh: KDG A02"
-              className="text-sm font-medium text-gray-800 text-right outline-none w-32 bg-transparent"
-            />
-          </div>
-
-          <div className="flex items-center justify-between border border-gray-200 rounded-xl p-3 relative">
-            <span className="text-sm text-gray-600">Kepemilikan</span>
-            <select
-              name="kepemilikan"
-              value={formData.kepemilikan}
-              onChange={handleChange}
-              className="appearance-none bg-transparent text-sm font-medium text-gray-800 text-center pr-6 outline-none cursor-pointer z-10">
-              <option value="Milik Sendiri">Milik Sendiri</option>
-              <option value="Titipan">Titipan</option>
-            </select>
-            <ChevronRight
-              size={16}
-              className="text-gray-400 absolute right-3"
-            />
-          </div>
-
-          <div className="flex items-center justify-between border border-gray-200 rounded-xl p-3 relative">
-            <span className="text-sm text-gray-600">Asal Usul</span>
-            <select
-              name="asal_usul"
-              value={formData.asal_usul}
-              onChange={handleChange}
-              className="appearance-none bg-transparent text-sm font-medium text-gray-800 text-center pr-6 outline-none cursor-pointer z-10">
-              <option value="Beli">Beli</option>
-              <option value="Lahir">Lahir</option>
-            </select>
-            <ChevronRight
-              size={16}
-              className="text-gray-400 absolute right-3"
-            />
-          </div>
-
-          <div className="flex items-center justify-between border border-gray-200 rounded-xl p-3">
-            <span className="text-sm text-gray-600">Harga Beli</span>
-            <div className="flex items-center gap-1">
-              <span className="text-sm font-medium text-gray-800">Rp</span>
-              <input
-                type="number"
+          {formData.asal_usul === "Beli" && (
+            <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+              <FormInput
+                label="Harga Beli"
                 name="harga_beli"
+                type="number"
                 value={formData.harga_beli}
                 onChange={handleChange}
                 placeholder="0"
-                className="text-sm font-medium text-gray-800 text-right outline-none w-24 bg-transparent"
+                prefix="Rp"
+                width="w-24"
               />
             </div>
-          </div>
+          )}
 
-          <div className="flex items-center justify-between border border-gray-200 rounded-xl p-3">
-            <span className="text-sm text-gray-600">Tanggal Lahir</span>
-            <input
-              type="date"
-              name="tanggal_lahir"
-              value={formData.tanggal_lahir}
-              onChange={handleChange}
-              className="text-sm font-medium text-gray-800 outline-none bg-transparent"
-            />
-          </div>
-
-          <div className="flex items-center justify-between border border-gray-200 rounded-xl p-3">
-            <span className="text-sm text-gray-600">Berat Lahir</span>
-            <div className="flex items-center gap-1">
-              <input
-                type="number"
+          {formData.asal_usul === "Lahir" && (
+            <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+              <FormInput
+                label="Tanggal Lahir"
+                name="tanggal_lahir"
+                type="date"
+                value={formData.tanggal_lahir}
+                onChange={handleChange}
+                width="w-32"
+              />
+              <FormInput
+                label="Berat Lahir"
                 name="berat_lahir"
+                type="number"
                 value={formData.berat_lahir}
                 onChange={handleChange}
-                placeholder="3"
-                step="0.1"
-                className="text-sm font-medium text-gray-800 text-right outline-none w-16 bg-transparent"
+                placeholder="0"
+                suffix="kg"
+                width="w-16"
               />
-              <span className="text-sm font-medium text-gray-800">kg</span>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs text-gray-600 mb-1 ml-1">
-                ID Induk
-              </label>
-              <input
-                type="text"
-                name="id_induk"
-                value={formData.id_induk}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
+                  <label className="block text-xs text-gray-600 mb-1">
+                    ID Induk
+                  </label>
+                  <input
+                    type="text"
+                    name="id_induk"
+                    value={formData.id_induk}
+                    onChange={handleChange}
+                    placeholder="Opsional"
+                    className="w-full text-sm outline-none bg-transparent"
+                  />
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
+                  <label className="block text-xs text-gray-600 mb-1">
+                    ID Pejantan
+                  </label>
+                  <input
+                    type="text"
+                    name="id_pejantan"
+                    value={formData.id_pejantan}
+                    onChange={handleChange}
+                    placeholder="Opsional"
+                    className="w-full text-sm outline-none bg-transparent"
+                  />
+                </div>
+              </div>
+
+              <FormSelect
+                label="Tipe Kelahiran"
+                name="tipe_kelahiran"
+                value={formData.tipe_kelahiran}
                 onChange={handleChange}
-                placeholder="Opsional"
-                className="w-full border border-gray-200 rounded-xl p-3 text-sm text-gray-800 focus:outline-none focus:border-emerald-500"
+                options={["Singel", "Twin", "Triplet"]}
               />
             </div>
-            <div>
-              <label className="block text-xs text-gray-600 mb-1 ml-1">
-                ID Pejantan
-              </label>
-              <input
-                type="text"
-                name="id_pejantan"
-                value={formData.id_pejantan}
-                onChange={handleChange}
-                placeholder="Opsional"
-                className="w-full border border-gray-200 rounded-xl p-3 text-sm text-gray-800 focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-          </div>
+          )}
 
-          <div className="flex items-center justify-between border border-gray-200 rounded-xl p-3 relative">
-            <span className="text-sm text-gray-600">Tipe Kelahiran</span>
-            <select
-              name="tipe_kelahiran"
-              value={formData.tipe_kelahiran}
-              onChange={handleChange}
-              className="appearance-none bg-transparent text-sm font-medium text-gray-800 text-center pr-6 outline-none cursor-pointer z-10">
-              <option value="Singel">Singel</option>
-              <option value="Twin">Twin (Kembar 2)</option>
-              <option value="Triplet">Triplet (Kembar 3)</option>
-            </select>
-            <ChevronRight
-              size={16}
-              className="text-gray-400 absolute right-3"
-            />
-          </div>
-
-          <div>
+          <div className="mt-2">
             <label className="block text-sm text-gray-600 mb-1.5 ml-1">
               Foto Ternak
             </label>
             <label
-              className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
-                foto
-                  ? "border-emerald-400 bg-emerald-50"
-                  : "border-gray-300 bg-gray-50 hover:bg-gray-100"
-              }`}>
+              className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed shadow-sm rounded-xl cursor-pointer transition-colors ${foto ? "border-emerald-400 bg-emerald-50" : validationErrors.foto ? "border-rose-400 bg-rose-50" : "border-gray-300 bg-white hover:bg-gray-50"}`}>
               <div className="flex flex-col items-center justify-center pt-5 pb-6">
                 <UploadCloud
                   size={24}
                   className={
-                    foto ? "text-emerald-600 mb-2" : "text-emerald-500 mb-2"
+                    foto ? "text-emerald-600 mb-2" : "text-gray-400 mb-2"
                   }
                 />
-                <p className="text-xs text-gray-500 font-medium text-center px-4">
-                  {foto
-                    ? `File terpilih: ${foto.name}`
-                    : "Klik untuk upload foto"}
+                <p className="text-xs text-gray-500 font-medium text-center px-4 line-clamp-1">
+                  {foto ? foto.name : "Klik untuk upload foto (Maks 2MB)"}
                 </p>
               </div>
               <input
@@ -289,9 +338,14 @@ export default function InputTernakPage() {
                 name="foto"
                 onChange={handleFileChange}
                 className="hidden"
-                accept="image/*"
+                accept="image/png, image/jpeg, image/jpg, image/webp"
               />
             </label>
+            {validationErrors.foto && (
+              <p className="text-xs text-rose-500 mt-1 ml-1">
+                {validationErrors.foto[0]}
+              </p>
+            )}
           </div>
 
           <div>
@@ -303,14 +357,19 @@ export default function InputTernakPage() {
               value={formData.catatan}
               onChange={handleChange}
               rows={3}
-              placeholder="Tambahkan catatan khusus..."
-              className="w-full border border-gray-200 rounded-xl p-3 text-sm text-gray-800 focus:outline-none focus:border-emerald-500 resize-none"></textarea>
+              placeholder="Kondisi kesehatan, ciri khusus..."
+              className="w-full border border-gray-200 bg-white shadow-sm rounded-xl p-3 text-sm text-gray-800 focus:outline-none focus:border-emerald-500 resize-none"></textarea>
           </div>
 
           <button
             type="submit"
-            className="mt-4 w-full bg-[#6db6a5] hover:bg-emerald-600 text-white font-semibold py-4 rounded-xl shadow-lg shadow-emerald-200 transition-colors tracking-wider">
-            SIMPAN
+            disabled={isLoading}
+            className={`mt-4 w-full text-white font-bold py-4 rounded-xl shadow-lg transition-colors tracking-wider flex justify-center items-center gap-2 ${isLoading ? "bg-emerald-400 cursor-not-allowed" : "bg-[#6db6a5] hover:bg-emerald-600 shadow-emerald-200"}`}>
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              "SIMPAN DATA"
+            )}
           </button>
         </form>
       </div>
