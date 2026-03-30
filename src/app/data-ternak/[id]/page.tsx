@@ -11,6 +11,10 @@ import {
   Activity,
   Tag,
   Image as ImageIcon,
+  Stethoscope,
+  Pill,
+  Syringe,
+  FileText,
 } from "lucide-react";
 import api from "@/lib/axios";
 
@@ -75,6 +79,14 @@ export default function DetailTernakPage() {
     </div>
   );
 
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
   return (
     <>
       <div className="flex items-center justify-between px-6 pt-10 pb-4 bg-emerald-600 text-white z-10 sticky top-0 shadow-sm">
@@ -117,7 +129,11 @@ export default function DetailTernakPage() {
                 </h2>
               </div>
               <span
-                className={`text-[11px] font-bold px-3 py-1.5 rounded-full ${ternak.jenis_kelamin === "Jantan" ? "bg-blue-100 text-blue-700" : "bg-rose-100 text-rose-700"}`}>
+                className={`text-[11px] font-bold px-3 py-1.5 rounded-full ${
+                  ternak.jenis_kelamin === "Jantan"
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-rose-100 text-rose-700"
+                }`}>
                 {ternak.jenis_kelamin}
               </span>
             </div>
@@ -166,7 +182,9 @@ export default function DetailTernakPage() {
             <InfoRow
               icon={Calendar}
               label="Tgl Lahir"
-              value={ternak.tanggal_lahir}
+              value={
+                ternak.tanggal_lahir ? formatDate(ternak.tanggal_lahir) : "-"
+              }
             />
             <InfoRow
               icon={Activity}
@@ -193,6 +211,82 @@ export default function DetailTernakPage() {
               </h3>
               <p className="text-sm text-amber-700 leading-relaxed font-medium">
                 {ternak.catatan}
+              </p>
+            </div>
+          )}
+
+          {ternak.perawatan && ternak.perawatan.length > 0 && (
+            <div className="mt-6">
+              <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 pl-1">
+                <Stethoscope size={20} className="text-emerald-600" /> Riwayat
+                Medis
+              </h3>
+              <div className="flex flex-col gap-3">
+                {ternak.perawatan.map((rawat: any) => (
+                  <div
+                    key={rawat.id}
+                    className="bg-white rounded-3xl p-4 shadow-sm border border-gray-200">
+                    <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                      <span className="text-sm font-bold text-emerald-700 flex items-center gap-2">
+                        <Calendar size={14} />{" "}
+                        {formatDate(rawat.tanggal_tindakan)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-start gap-2">
+                        <Activity
+                          size={16}
+                          className="text-rose-500 mt-0.5 shrink-0"
+                        />
+                        <div>
+                          <p className="text-xs text-gray-500 font-medium">
+                            Diagnosa
+                          </p>
+                          <p className="text-sm font-semibold text-gray-800">
+                            {rawat.diagnosa}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Pill
+                          size={16}
+                          className="text-blue-500 mt-0.5 shrink-0"
+                        />
+                        <div>
+                          <p className="text-xs text-gray-500 font-medium">
+                            Obat & Dosis
+                          </p>
+                          <p className="text-sm font-semibold text-gray-800">
+                            {rawat.obat}{" "}
+                            <span className="text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded text-xs ml-1">
+                              {rawat.dosis} {rawat.satuan_dosis}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                      {rawat.catatan && (
+                        <div className="flex items-start gap-2 mt-1">
+                          <FileText
+                            size={16}
+                            className="text-gray-400 mt-0.5 shrink-0"
+                          />
+                          <p className="text-[13px] text-gray-600 font-medium italic">
+                            "{rawat.catatan}"
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(!ternak.perawatan || ternak.perawatan.length === 0) && (
+            <div className="mt-6 bg-slate-100 rounded-3xl p-5 border border-dashed border-gray-300 text-center">
+              <Stethoscope size={32} className="text-gray-300 mx-auto mb-2" />
+              <p className="text-sm font-medium text-gray-500">
+                Belum ada riwayat medis/perawatan.
               </p>
             </div>
           )}
