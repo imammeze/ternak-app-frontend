@@ -13,8 +13,9 @@ import {
   Image as ImageIcon,
   Stethoscope,
   Pill,
-  Syringe,
   FileText,
+  ArrowRightLeft,
+  Home,
 } from "lucide-react";
 import api from "@/lib/axios";
 
@@ -73,7 +74,7 @@ export default function DetailTernakPage() {
         <Icon size={18} className="text-emerald-500" />
         <span className="text-sm font-medium">{label}</span>
       </div>
-      <span className="text-sm font-bold text-gray-800 text-right">
+      <span className="text-sm font-bold text-gray-800 text-right truncate pl-4">
         {value || "-"}
       </span>
     </div>
@@ -150,7 +151,11 @@ export default function DetailTernakPage() {
               label="Jenis Ternak"
               value={ternak.jenis_ternak}
             />
-            <InfoRow icon={MapPin} label="Kandang" value={ternak.no_kandang} />
+            <InfoRow
+              icon={MapPin}
+              label="Posisi Kandang"
+              value={ternak.no_kandang}
+            />
             <InfoRow
               icon={Tag}
               label="Kepemilikan"
@@ -282,12 +287,69 @@ export default function DetailTernakPage() {
             </div>
           )}
 
-          {(!ternak.perawatan || ternak.perawatan.length === 0) && (
-            <div className="mt-6 bg-slate-100 rounded-3xl p-5 border border-dashed border-gray-300 text-center">
-              <Stethoscope size={32} className="text-gray-300 mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-500">
-                Belum ada riwayat medis/perawatan.
-              </p>
+          {ternak.perpindahan && ternak.perpindahan.length > 0 && (
+            <div className="mt-6">
+              <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 pl-1">
+                <ArrowRightLeft size={20} className="text-amber-500" /> Riwayat
+                Perpindahan
+              </h3>
+              <div className="flex flex-col gap-3">
+                {ternak.perpindahan.map((pindah: any) => (
+                  <div
+                    key={pindah.id}
+                    className="bg-white rounded-3xl p-4 shadow-sm border border-gray-200">
+                    <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+                      <span className="text-sm font-bold text-amber-600 flex items-center gap-2">
+                        <Calendar size={14} />{" "}
+                        {formatDate(pindah.tanggal_tindakan)}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-gray-100">
+                        <div className="flex flex-col flex-1 items-center text-center">
+                          <Home size={16} className="text-gray-400 mb-1" />
+                          <span className="text-[11px] text-gray-500 font-medium uppercase">
+                            Asal
+                          </span>
+                          <span className="text-[13px] font-bold text-gray-700 leading-tight mt-0.5 line-clamp-2">
+                            {pindah.kandang_awal}
+                          </span>
+                        </div>
+
+                        <div className="px-2 flex flex-col items-center">
+                          <ArrowRightLeft
+                            size={16}
+                            className="text-emerald-500"
+                          />
+                        </div>
+
+                        <div className="flex flex-col flex-1 items-center text-center">
+                          <MapPin size={16} className="text-emerald-600 mb-1" />
+                          <span className="text-[11px] text-emerald-600 font-medium uppercase">
+                            Tujuan
+                          </span>
+                          <span className="text-[13px] font-bold text-emerald-800 leading-tight mt-0.5 line-clamp-2">
+                            {pindah.kandang_tujuan}
+                          </span>
+                        </div>
+                      </div>
+
+                      {pindah.catatan && (
+                        <div className="flex items-start gap-2 px-1">
+                          <FileText
+                            size={16}
+                            className="text-gray-400 mt-0.5 shrink-0"
+                          />
+                          <p className="text-[13px] text-gray-600 font-medium italic">
+                            "{pindah.catatan}"
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
