@@ -42,11 +42,11 @@ export default function BottomNavigation() {
         </span>
       </Link>
 
-      <div className="relative -top-6 flex flex-col items-center cursor-pointer">
+      {/* <div className="relative -top-6 flex flex-col items-center cursor-pointer">
         <div className="bg-emerald-500 w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200 text-white transform rotate-45 hover:scale-105 transition-transform">
           <QrCode size={26} className="-rotate-45" />
         </div>
-      </div>
+      </div> */}
 
       <Link
         href="/stock-susu"
