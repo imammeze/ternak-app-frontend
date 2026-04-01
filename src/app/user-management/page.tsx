@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Users, ShieldAlert } from "lucide-react";
+import { ChevronLeft, Users, ShieldAlert, Plus } from "lucide-react";
 import api from "@/lib/axios";
 
 interface UserData {
@@ -46,7 +46,11 @@ export default function UserManagementPage() {
           <ChevronLeft size={24} />
         </Link>
         <h1 className="text-lg font-bold tracking-wide">Manajemen User</h1>
-        <div className="w-10"></div>
+        <Link
+          href="/user-management/create"
+          className="cursor-pointer bg-white/20 p-2 rounded-full backdrop-blur-md hover:bg-white/30 transition-colors">
+          <Plus size={24} />
+        </Link>
       </div>
 
       <div className="flex-1 bg-slate-50 px-6 pt-6 pb-32 overflow-y-auto">
