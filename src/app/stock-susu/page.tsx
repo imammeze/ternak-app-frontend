@@ -13,6 +13,7 @@ import {
   Filter,
   User,
   Tag,
+  Box,
 } from "lucide-react";
 import api from "@/lib/axios";
 
@@ -22,6 +23,8 @@ interface RiwayatStok {
   waktu_input: string;
   tipe: "masuk" | "keluar";
   total_liter: number;
+  qty_1l: number;
+  qty_250ml: number;
   kategori: string;
   aktor: string;
   catatan: string;
@@ -32,6 +35,9 @@ export default function StokSusuPage() {
   const [stokSaatIni, setStokSaatIni] = useState(0);
   const [totalMasuk, setTotalMasuk] = useState(0);
   const [totalKeluar, setTotalKeluar] = useState(0);
+
+  const [stok1L, setStok1L] = useState(0);
+  const [stok250ml, setStok250ml] = useState(0);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -48,10 +54,15 @@ export default function StokSusuPage() {
         const dataProduksi = resProduksi.data.data;
         const dataPengeluaran = resPengeluaran.data.data;
 
-        const sumMasuk = dataProduksi.reduce(
-          (acc: number, curr: any) => acc + Number(curr.total_liter),
-          0,
-        );
+        const sumMasuk = dataProduksi.reduce((acc: number, curr: any) => {
+          const liter1L =
+            (Number(curr.pagi_1l || 0) + Number(curr.sore_1l || 0)) * 1;
+          const liter250ml =
+            (Number(curr.pagi_250ml || 0) + Number(curr.sore_250ml || 0)) *
+            0.25;
+          return acc + liter1L + liter250ml;
+        }, 0);
+
         const sumKeluar = dataPengeluaran.reduce(
           (acc: number, curr: any) => acc + Number(curr.total_liter),
           0,
@@ -61,16 +72,49 @@ export default function StokSusuPage() {
         setTotalKeluar(sumKeluar);
         setStokSaatIni(sumMasuk - sumKeluar);
 
-        const formatProduksi: RiwayatStok[] = dataProduksi.map((item: any) => ({
-          id: `prod-${item.id}`,
-          tanggal: item.tanggal,
-          waktu_input: item.created_at,
-          tipe: "masuk",
-          total_liter: Number(item.total_liter),
-          kategori: "Produksi Harian",
-          aktor: item.petugas || "Petugas Tidak Diketahui",
-          catatan: item.catatan || "",
-        }));
+        const masuk1L = dataProduksi.reduce(
+          (acc: number, curr: any) =>
+            acc + Number(curr.pagi_1l || 0) + Number(curr.sore_1l || 0),
+          0,
+        );
+        const masuk250ml = dataProduksi.reduce(
+          (acc: number, curr: any) =>
+            acc + Number(curr.pagi_250ml || 0) + Number(curr.sore_250ml || 0),
+          0,
+        );
+
+        const keluar1L = dataPengeluaran.reduce(
+          (acc: number, curr: any) => acc + Number(curr.susu_1l || 0),
+          0,
+        );
+        const keluar250ml = dataPengeluaran.reduce(
+          (acc: number, curr: any) => acc + Number(curr.susu_250ml || 0),
+          0,
+        );
+
+        setStok1L(masuk1L - keluar1L);
+        setStok250ml(masuk250ml - keluar250ml);
+
+        const formatProduksi: RiwayatStok[] = dataProduksi.map((item: any) => {
+          const storableLiters =
+            (Number(item.pagi_1l || 0) + Number(item.sore_1l || 0)) * 1 +
+            (Number(item.pagi_250ml || 0) + Number(item.sore_250ml || 0)) *
+              0.25;
+
+          return {
+            id: `prod-${item.id}`,
+            tanggal: item.tanggal,
+            waktu_input: item.created_at,
+            tipe: "masuk",
+            total_liter: storableLiters,
+            qty_1l: Number(item.pagi_1l || 0) + Number(item.sore_1l || 0),
+            qty_250ml:
+              Number(item.pagi_250ml || 0) + Number(item.sore_250ml || 0),
+            kategori: "Produksi Harian",
+            aktor: item.petugas || "Petugas Tidak Diketahui",
+            catatan: item.catatan || "",
+          };
+        });
 
         const formatPengeluaran: RiwayatStok[] = dataPengeluaran.map(
           (item: any) => ({
@@ -79,6 +123,8 @@ export default function StokSusuPage() {
             waktu_input: item.created_at,
             tipe: "keluar",
             total_liter: Number(item.total_liter),
+            qty_1l: Number(item.susu_1l || 0),
+            qty_250ml: Number(item.susu_250ml || 0),
             kategori: item.kategori,
             aktor: item.customer
               ? `Customer: ${item.customer}`
@@ -144,6 +190,31 @@ export default function StokSusuPage() {
               <div className="text-5xl font-black text-emerald-600 tracking-tight">
                 {stokSaatIni.toFixed(2)}{" "}
                 <span className="text-2xl font-bold text-emerald-400">L</span>
+              </div>
+
+              <div className="flex items-center gap-3 mt-4 w-full">
+                <div className="flex-1 flex flex-col items-center justify-center bg-emerald-50 border border-emerald-100 rounded-xl py-2">
+                  <span className="text-[10px] uppercase font-bold text-emerald-600 tracking-wider">
+                    Ukuran 1 L
+                  </span>
+                  <span className="text-lg font-black text-emerald-800">
+                    {stok1L}{" "}
+                    <span className="text-xs font-bold text-emerald-600">
+                      Pcs
+                    </span>
+                  </span>
+                </div>
+                <div className="flex-1 flex flex-col items-center justify-center bg-emerald-50 border border-emerald-100 rounded-xl py-2">
+                  <span className="text-[10px] uppercase font-bold text-emerald-600 tracking-wider">
+                    Ukuran 250 ml
+                  </span>
+                  <span className="text-lg font-black text-emerald-800">
+                    {stok250ml}{" "}
+                    <span className="text-xs font-bold text-emerald-600">
+                      Pcs
+                    </span>
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -243,6 +314,21 @@ export default function StokSusuPage() {
                       {item.total_liter} L
                     </span>
                   </div>
+
+                  {(item.qty_1l > 0 || item.qty_250ml > 0) && (
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      {item.qty_1l > 0 && (
+                        <div className="flex items-center gap-1 bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[11px] font-bold">
+                          <Box size={10} /> 1L: {item.qty_1l} Pcs
+                        </div>
+                      )}
+                      {item.qty_250ml > 0 && (
+                        <div className="flex items-center gap-1 bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[11px] font-bold">
+                          <Box size={10} /> 250ml: {item.qty_250ml} Pcs
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <div className="flex items-center gap-2 text-xs font-medium text-gray-500 mt-1.5">
                     <Calendar size={12} className="text-emerald-500" />
