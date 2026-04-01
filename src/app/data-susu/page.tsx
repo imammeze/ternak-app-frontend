@@ -11,6 +11,8 @@ import {
   CalendarDays,
   User,
   Milk,
+  Baby,
+  Activity,
 } from "lucide-react";
 import api from "@/lib/axios";
 
@@ -21,8 +23,13 @@ interface ProduksiSusu {
   total_liter: string | number;
   petugas: string;
   pemilik?: { name: string };
+  jumlah_ternak: number;
   pagi_1l: number;
   sore_1l: number;
+  pagi_250ml: number;
+  sore_250ml: number;
+  pagi_cempe_ml: number;
+  sore_cempe_ml: number;
 }
 
 export default function RiwayatSusuPage() {
@@ -142,53 +149,109 @@ export default function RiwayatSusuPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {filteredSusu.map((susu) => (
-              <div
-                key={susu.id}
-                className="bg-white p-4 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col relative overflow-hidden">
+            {filteredSusu.map((susu) => {
+              const qty1L =
+                Number(susu.pagi_1l || 0) + Number(susu.sore_1l || 0);
+              const qty250ml =
+                Number(susu.pagi_250ml || 0) + Number(susu.sore_250ml || 0);
+              const qtyCempe =
+                Number(susu.pagi_cempe_ml || 0) +
+                Number(susu.sore_cempe_ml || 0);
+              const popTernak = Number(susu.jumlah_ternak || 0);
+
+              return (
                 <div
-                  className={`absolute left-0 top-0 bottom-0 w-1.5 ${susu.kepemilikan === "Milik Sendiri" ? "bg-emerald-400" : "bg-amber-400"}`}></div>
+                  key={susu.id}
+                  className="bg-white p-4 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col relative overflow-hidden">
+                  <div
+                    className={`absolute left-0 top-0 bottom-0 w-1.5 ${susu.kepemilikan === "Milik Sendiri" ? "bg-emerald-400" : "bg-amber-400"}`}></div>
 
-                <div className="flex justify-between items-center ml-2 border-b border-gray-50 pb-3 mb-3">
-                  <div className="flex items-center gap-2 text-gray-700">
-                    <CalendarDays size={18} className="text-emerald-600" />
-                    <span className="font-bold text-sm">
-                      {formatDate(susu.tanggal)}
-                    </span>
-                  </div>
-                  <div className="bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                    <span className="font-black text-emerald-700 text-sm">
-                      {Number(susu.total_liter).toFixed(2)} L
-                    </span>
-                  </div>
-                </div>
-
-                <div className="ml-2 flex flex-col gap-2">
-                  <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
-                    <Droplets
-                      size={14}
-                      className={
-                        susu.kepemilikan === "Milik Sendiri"
-                          ? "text-emerald-500"
-                          : "text-amber-500"
-                      }
-                    />
-                    <span>
-                      {susu.kepemilikan === "Milik Sendiri"
-                        ? "Milik Sendiri"
-                        : `Stakeholder: ${susu.pemilik?.name || "Tidak Diketahui"}`}
-                    </span>
-                  </div>
-
-                  {susu.petugas && (
-                    <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
-                      <User size={14} className="text-blue-500" />
-                      <span>Petugas: {susu.petugas}</span>
+                  <div className="flex justify-between items-center ml-2 border-b border-gray-50 pb-3 mb-3">
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <CalendarDays size={18} className="text-emerald-600" />
+                      <span className="font-bold text-sm">
+                        {formatDate(susu.tanggal)}
+                      </span>
                     </div>
-                  )}
+                    <div className="bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                      <span className="font-black text-emerald-700 text-sm">
+                        {Number(susu.total_liter).toFixed(2)} L
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="ml-2 mb-3">
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-emerald-50/70 border border-emerald-100 p-2 rounded-xl flex flex-col items-center justify-center">
+                        <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-0.5">
+                          1 Liter
+                        </span>
+                        <span className="text-sm font-black text-emerald-800">
+                          {qty1L}{" "}
+                          <span className="text-[10px] font-bold text-emerald-600">
+                            Pcs
+                          </span>
+                        </span>
+                      </div>
+                      <div className="bg-emerald-50/70 border border-emerald-100 p-2 rounded-xl flex flex-col items-center justify-center">
+                        <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-0.5">
+                          250 ml
+                        </span>
+                        <span className="text-sm font-black text-emerald-800">
+                          {qty250ml}{" "}
+                          <span className="text-[10px] font-bold text-emerald-600">
+                            Pcs
+                          </span>
+                        </span>
+                      </div>
+                      <div className="bg-amber-50 border border-amber-100 p-2 rounded-xl flex flex-col items-center justify-center">
+                        <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-0.5 flex items-center gap-1">
+                          <Baby size={10} /> Cempe
+                        </span>
+                        <span className="text-sm font-black text-amber-800">
+                          {qtyCempe}{" "}
+                          <span className="text-[10px] font-bold text-amber-600">
+                            ml
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="ml-2 flex flex-col gap-2 border-t border-gray-50 pt-2">
+                    <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
+                      <Droplets
+                        size={14}
+                        className={
+                          susu.kepemilikan === "Milik Sendiri"
+                            ? "text-emerald-500"
+                            : "text-amber-500"
+                        }
+                      />
+                      <span>
+                        {susu.kepemilikan === "Milik Sendiri"
+                          ? "Milik Sendiri"
+                          : `Stakeholder: ${susu.pemilik?.name || "Tidak Diketahui"}`}
+                      </span>
+                    </div>
+
+                    {popTernak > 0 && (
+                      <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
+                        <Activity size={14} className="text-purple-500" />
+                        <span>Diperah dari {popTernak} Ekor Ternak</span>
+                      </div>
+                    )}
+
+                    {susu.petugas && (
+                      <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
+                        <User size={14} className="text-blue-500" />
+                        <span>Petugas: {susu.petugas}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
