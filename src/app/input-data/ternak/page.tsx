@@ -43,23 +43,32 @@ export default function InputTernakPage() {
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string[]>
   >({});
+
   const [stakeholders, setStakeholders] = useState<
     { id: string; name: string }[]
   >([]);
+  const [ternakList, setTernakList] = useState<any[]>([]);
+  const [kandangList, setKandangList] = useState<any[]>([]);
 
   useEffect(() => {
-    const fetchStakeholders = async () => {
+    const fetchInitialData = async () => {
       try {
-        const response = await api.get("/api/users");
-        const stakeholderList = response.data.users.filter((u: any) =>
+        const resUsers = await api.get("/api/users");
+        const stakeholderList = resUsers.data.users.filter((u: any) =>
           u.roles?.some((r: any) => r.name.toLowerCase() === "stakeholder"),
         );
         setStakeholders(stakeholderList);
+
+        const resTernak = await api.get("/api/ternak");
+        setTernakList(resTernak.data.data);
+
+        const resKandang = await api.get("/api/kandang");
+        setKandangList(resKandang.data.data);
       } catch (err) {
-        console.error("Gagal memuat daftar stakeholder:", err);
+        console.error("Gagal memuat data awal:", err);
       }
     };
-    fetchStakeholders();
+    fetchInitialData();
   }, []);
 
   const handleChange = (
@@ -185,14 +194,32 @@ export default function InputTernakPage() {
             onChange={handleChange}
             options={["Jantan", "Betina"]}
           />
-          <FormInput
-            label="No Kandang"
-            name="no_kandang"
-            value={formData.no_kandang}
-            onChange={handleChange}
-            placeholder="Contoh: A02"
-            width="w-24"
-          />
+
+          <div className="bg-white border border-gray-200 rounded-xl p-3.5 shadow-sm relative focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-200 transition-all">
+            <label className="block text-[11px] text-gray-400 font-bold uppercase tracking-wider mb-1">
+              Pilih Kandang
+            </label>
+            <select
+              name="no_kandang"
+              value={formData.no_kandang}
+              onChange={handleChange}
+              className="w-full text-[15px] font-semibold text-gray-800 outline-none bg-transparent appearance-none cursor-pointer pr-4 pt-2 truncate"
+              required>
+              <option value="" disabled>
+                -- Pilih Lokasi Kandang --
+              </option>
+              {kandangList.map((k) => (
+                <option key={k.id} value={k.kode_kandang}>
+                  {k.kode_kandang} - {k.nama_kandang} ({k.jenis})
+                </option>
+              ))}
+            </select>
+            <ChevronRight
+              size={16}
+              className="text-gray-400 absolute right-3 bottom-3.5 transform rotate-90 pointer-events-none"
+            />
+          </div>
+
           <FormSelect
             label="Kepemilikan"
             name="kepemilikan"
@@ -278,30 +305,59 @@ export default function InputTernakPage() {
               />
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
-                  <label className="block text-xs text-gray-600 mb-1">
-                    ID Induk
+                <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm relative">
+                  <label className="block text-[11px] text-gray-500 mb-1 font-bold uppercase tracking-wider">
+                    ID Induk (Betina)
                   </label>
-                  <input
-                    type="text"
+                  <select
                     name="id_induk"
                     value={formData.id_induk}
                     onChange={handleChange}
-                    placeholder="Opsional"
-                    className="w-full text-sm outline-none bg-transparent"
+                    className="w-full text-sm font-medium text-gray-800 outline-none bg-transparent appearance-none cursor-pointer pr-4 truncate">
+                    <option value="">Opsional</option>
+                    {ternakList
+                      .filter(
+                        (t) =>
+                          t.jenis_kelamin === "Betina" &&
+                          t.id_ternak !== formData.id_pejantan,
+                      )
+                      .map((t) => (
+                        <option key={t.id_ternak} value={t.id_ternak}>
+                          {t.id_ternak} - {t.nama_ternak}
+                        </option>
+                      ))}
+                  </select>
+                  <ChevronRight
+                    size={14}
+                    className="text-gray-400 absolute right-2 bottom-3.5 transform rotate-90 pointer-events-none"
                   />
                 </div>
-                <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm">
-                  <label className="block text-xs text-gray-600 mb-1">
-                    ID Pejantan
+
+                <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm relative">
+                  <label className="block text-[11px] text-gray-500 mb-1 font-bold uppercase tracking-wider">
+                    ID Pejantan (Jantan)
                   </label>
-                  <input
-                    type="text"
+                  <select
                     name="id_pejantan"
                     value={formData.id_pejantan}
                     onChange={handleChange}
-                    placeholder="Opsional"
-                    className="w-full text-sm outline-none bg-transparent"
+                    className="w-full text-sm font-medium text-gray-800 outline-none bg-transparent appearance-none cursor-pointer pr-4 truncate">
+                    <option value="">Opsional</option>
+                    {ternakList
+                      .filter(
+                        (t) =>
+                          t.jenis_kelamin === "Jantan" &&
+                          t.id_ternak !== formData.id_induk,
+                      )
+                      .map((t) => (
+                        <option key={t.id_ternak} value={t.id_ternak}>
+                          {t.id_ternak} - {t.nama_ternak}
+                        </option>
+                      ))}
+                  </select>
+                  <ChevronRight
+                    size={14}
+                    className="text-gray-400 absolute right-2 bottom-3.5 transform rotate-90 pointer-events-none"
                   />
                 </div>
               </div>
