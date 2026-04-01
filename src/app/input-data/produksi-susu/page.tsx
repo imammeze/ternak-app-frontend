@@ -13,19 +13,24 @@ import {
   User,
   AlertCircle,
   Droplets,
+  Activity,
+  Lock,
 } from "lucide-react";
 import api from "@/lib/axios";
-
+import { useAuthStore } from "@/store/authStore";
 import IconInputRow from "@/features/inputan/produksi-susu/components/IconInputRow";
 import IconSelectRow from "@/features/inputan/produksi-susu/components/IconSelectRow";
 
 export default function InputProduksiSusuPage() {
   const router = useRouter();
 
+  const { user } = useAuthStore();
+
   const [formData, setFormData] = useState({
     tanggal: new Date().toISOString().split("T")[0],
     kepemilikan: "Milik Sendiri",
     user_id: "",
+    jumlah_ternak: "",
     pagi_1l: "",
     pagi_250ml: "",
     pagi_cempe: "",
@@ -39,32 +44,25 @@ export default function InputProduksiSusuPage() {
   const [stakeholders, setStakeholders] = useState<
     { id: string; name: string }[]
   >([]);
-  const [karyawans, setKaryawans] = useState<{ id: string; name: string }[]>(
-    [],
-  );
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    if (user?.name) {
+      setFormData((prev) => ({ ...prev, petugas: user.name }));
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const fetchStakeholders = async () => {
       try {
-        const response = await api.get("/api/users");
-        const allUsers = response.data.users;
-        setStakeholders(
-          allUsers.filter((u: any) =>
-            u.roles?.some((r: any) => r.name.toLowerCase() === "stakeholder"),
-          ),
-        );
-        setKaryawans(
-          allUsers.filter((u: any) =>
-            u.roles?.some((r: any) => r.name.toLowerCase() === "karyawan"),
-          ),
-        );
+        const response = await api.get("/api/list-stakeholders");
+        setStakeholders(response.data);
       } catch (err) {
-        console.error("Gagal memuat daftar user:", err);
+        console.error("Gagal memuat daftar stakeholder:", err);
       }
     };
-    fetchUsers();
+    fetchStakeholders();
   }, []);
 
   const handleChange = (
@@ -101,6 +99,7 @@ export default function InputProduksiSusuPage() {
       kepemilikan: formData.kepemilikan,
       user_id:
         formData.kepemilikan === "Milik Sendiri" ? null : formData.user_id,
+      jumlah_ternak: Number(formData.jumlah_ternak) || 0,
       pagi_1l: Number(formData.pagi_1l) || 0,
       pagi_250ml: Number(formData.pagi_250ml) || 0,
       pagi_cempe_ml: Number(formData.pagi_cempe) || 0,
@@ -120,7 +119,7 @@ export default function InputProduksiSusuPage() {
       router.push("/input-data");
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || "Gagal menyimpan data.");
-      setIsLoading(false); // Matikan loading hanya jika error. Jika sukses, biarkan loading muter sampai pindah halaman.
+      setIsLoading(false);
     }
   };
 
@@ -128,10 +127,6 @@ export default function InputProduksiSusuPage() {
     { value: "Milik Sendiri", label: "Milik Sendiri" },
     { value: "Milik Stakeholder", label: "Milik Stakeholder" },
   ];
-  const karyawanOptions = karyawans.map((k) => ({
-    value: k.name,
-    label: k.name,
-  }));
 
   return (
     <>
@@ -146,7 +141,6 @@ export default function InputProduksiSusuPage() {
       </div>
 
       <div className="flex-1 bg-slate-50 px-6 pt-6 pb-32 overflow-y-auto">
-        {/* Banner manual untuk error saja */}
         {errorMsg && (
           <div className="mb-4 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 text-rose-700">
             <AlertCircle size={24} className="text-rose-500 shrink-0" />
@@ -201,6 +195,19 @@ export default function InputProduksiSusuPage() {
                 />
               </div>
             )}
+
+            <div className="border-t border-dashed border-gray-200"></div>
+            <IconInputRow
+              icon={Activity}
+              label="Jumlah Ternak"
+              name="jumlah_ternak"
+              type="number"
+              value={formData.jumlah_ternak}
+              onChange={handleChange}
+              width="w-16"
+              suffix="Ekor"
+              iconColor="text-blue-500"
+            />
           </div>
 
           <h2 className="text-sm font-semibold text-gray-500 mt-2 ml-1">
@@ -284,16 +291,22 @@ export default function InputProduksiSusuPage() {
             Petugas & Catatan
           </h2>
           <div className="flex flex-col gap-3">
-            <IconSelectRow
-              icon={User}
-              label="Petugas"
-              name="petugas"
-              value={formData.petugas}
-              onChange={handleChange}
-              options={karyawanOptions}
-              placeholder="Pilih Karyawan"
-              iconColor="text-gray-400"
-            />
+            <div className="flex items-center justify-between border border-gray-200 rounded-xl p-3.5 bg-gray-50 shadow-sm opacity-90 relative">
+              <div className="flex items-center gap-3">
+                <User size={20} className="text-gray-400" />
+                <span className="text-[15px] text-gray-600 font-medium">
+                  Petugas
+                </span>
+              </div>
+              <input
+                type="text"
+                name="petugas"
+                value={formData.petugas || "Memuat..."}
+                readOnly
+                className="flex-1 text-[15px] font-bold text-gray-600 text-right outline-none bg-transparent ml-4 truncate pr-6 pointer-events-none"
+              />
+              <Lock size={14} className="text-gray-400 absolute right-3" />
+            </div>
             <div className="border border-gray-200 rounded-xl p-3.5 bg-white shadow-sm">
               <textarea
                 name="catatan"
