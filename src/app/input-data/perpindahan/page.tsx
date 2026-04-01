@@ -27,7 +27,7 @@ export default function InputPerpindahanPage() {
     kandang_tujuan: "",
     catatan: "",
   });
-
+  const [kandangList, setKandangList] = useState<any[]>([]);
   const [ternakList, setTernakList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -35,8 +35,12 @@ export default function InputPerpindahanPage() {
   useEffect(() => {
     const fetchTernak = async () => {
       try {
-        const response = await api.get("/api/ternak");
-        setTernakList(response.data.data);
+        const [resTernak, resKandang] = await Promise.all([
+          api.get("/api/ternak"),
+          api.get("/api/kandang"),
+        ]);
+        setTernakList(resTernak.data.data);
+        setKandangList(resKandang.data.data);
       } catch (err) {
         console.error("Gagal memuat daftar ternak:", err);
       }
@@ -52,6 +56,7 @@ export default function InputPerpindahanPage() {
       ...prev,
       id_ternak: selectedId,
       kandang_awal: selectedTernak?.no_kandang || "",
+      kandang_tujuan: "",
     }));
   };
 
@@ -212,11 +217,13 @@ export default function InputPerpindahanPage() {
               <option value="" disabled>
                 Pilih Tujuan
               </option>
-              {daftarKandang.map((kd) => (
-                <option key={kd} value={kd}>
-                  {kd}
-                </option>
-              ))}
+              {kandangList
+                .filter((kd) => kd.kode_kandang !== formData.kandang_awal)
+                .map((kd) => (
+                  <option key={kd.id} value={kd.kode_kandang}>
+                    {kd.kode_kandang} - {kd.nama_kandang}
+                  </option>
+                ))}
             </select>
             <ChevronRight
               size={18}
