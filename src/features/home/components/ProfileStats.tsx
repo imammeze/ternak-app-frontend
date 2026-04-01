@@ -31,21 +31,24 @@ export default function ProfileStats() {
 
           const resProduksi = await api.get("/api/produksi-susu");
           const totalProduksi = resProduksi.data.data.reduce(
-            (acc: number, curr: any) => acc + Number(curr.total_liter),
+            (acc: number, curr: any) => {
+              const liter1L =
+                (Number(curr.pagi_1l || 0) + Number(curr.sore_1l || 0)) * 1;
+              const liter250ml =
+                (Number(curr.pagi_250ml || 0) + Number(curr.sore_250ml || 0)) *
+                0.25;
+              return acc + liter1L + liter250ml;
+            },
             0,
           );
 
-          // 2. Ambil Total Pengeluaran Susu (Susu Keluar)
           const resPengeluaran = await api.get("/api/pengeluaran-susu");
           const totalPengeluaran = resPengeluaran.data.data.reduce(
             (acc: number, curr: any) => acc + Number(curr.total_liter),
             0,
           );
 
-          // 3. Kurangi Produksi dengan Pengeluaran untuk mendapat STOK RIIL
           const stokSaatIni = totalProduksi - totalPengeluaran;
-
-          // Format agar tampil cantik
           setSusuTotal(parseFloat(stokSaatIni.toFixed(2)));
         }
       } catch (error) {
