@@ -12,6 +12,7 @@ export default function ProfileStats() {
   const [userCount, setUserCount] = useState<number | string>("...");
   const [ternakCount, setTernakCount] = useState<number | string>("...");
   const [susuTotal, setSusuTotal] = useState<number | string>("...");
+  const [susuStock, setSusuStock] = useState<number | string>("...");
 
   useEffect(() => {
     setIsClient(true);
@@ -30,6 +31,9 @@ export default function ProfileStats() {
           setTernakCount(resTernak.data.data.length);
 
           const resProduksi = await api.get("/api/produksi-susu");
+
+          let produksiKomersial = 0;
+
           const totalProduksi = resProduksi.data.data.reduce(
             (acc: number, curr: any) => {
               const liter1L =
@@ -37,25 +41,38 @@ export default function ProfileStats() {
               const liter250ml =
                 (Number(curr.pagi_250ml || 0) + Number(curr.sore_250ml || 0)) *
                 0.25;
-              return acc + liter1L + liter250ml;
+              const literCempe =
+                (Number(curr.pagi_cempe_ml || 0) +
+                  Number(curr.sore_cempe_ml || 0)) /
+                1000;
+
+              produksiKomersial += liter1L + liter250ml;
+
+              return acc + liter1L + liter250ml + literCempe;
             },
             0,
           );
 
-          const resPengeluaran = await api.get("/api/pengeluaran-susu");
-          const totalPengeluaran = resPengeluaran.data.data.reduce(
-            (acc: number, curr: any) => acc + Number(curr.total_liter),
-            0,
-          );
+          let totalPengeluaran = 0;
+          if (role === "admin" || role === "manager") {
+            const resPengeluaran = await api.get("/api/pengeluaran-susu");
+            totalPengeluaran = resPengeluaran.data.data.reduce(
+              (acc: number, curr: any) => acc + Number(curr.total_liter),
+              0,
+            );
+          }
 
-          const stokSaatIni = totalProduksi - totalPengeluaran;
-          setSusuTotal(parseFloat(stokSaatIni.toFixed(2)));
+          setSusuTotal(parseFloat(totalProduksi.toFixed(2)));
+          setSusuStock(
+            parseFloat((produksiKomersial - totalPengeluaran).toFixed(2)),
+          );
         }
       } catch (error) {
         console.error("Gagal mengambil data dashboard:", error);
         setUserCount("?");
         setTernakCount("?");
         setSusuTotal("?");
+        setSusuStock("?");
       }
     };
 
@@ -79,11 +96,11 @@ export default function ProfileStats() {
     unit?: string;
   }) => (
     <div className="flex-1 bg-slate-50 p-3 rounded-2xl text-center border border-gray-100 shadow-sm">
-      <p className="text-xs text-gray-500 font-medium mb-1 line-clamp-1">
+      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tight mb-1 line-clamp-1">
         {title}
       </p>
-      <p className="text-xl font-bold text-emerald-800 flex items-baseline justify-center gap-1">
-        {value} {unit && <span className="text-sm font-bold">{unit}</span>}
+      <p className="text-lg font-black text-emerald-800 flex items-baseline justify-center gap-0.5">
+        {value} {unit && <span className="text-[12px] font-bold">{unit}</span>}
       </p>
     </div>
   );
@@ -96,7 +113,7 @@ export default function ProfileStats() {
         return (
           <>
             <StatCard title="Ternak" value={ternakCount} />
-            <StatCard title="Susu" value={susuTotal} unit="L" />{" "}
+            <StatCard title="Produksi Susu" value={susuTotal} unit="L" />
             <StatCard title="User" value={userCount} />
           </>
         );
@@ -105,8 +122,8 @@ export default function ProfileStats() {
         return (
           <>
             <StatCard title="Ternak" value={ternakCount} />
-            <StatCard title="Susu" value={susuTotal} unit="L" />{" "}
-            <StatCard title="Stock Susu" value="15" unit="L" />
+            <StatCard title="Produksi Susu" value={susuTotal} unit="L" />
+            <StatCard title="Stock Susu" value={susuStock} unit="L" />
           </>
         );
 
@@ -114,8 +131,8 @@ export default function ProfileStats() {
         return (
           <>
             <StatCard title="Ternak (Milikku)" value={ternakCount} />
-            <StatCard title="Susu (Milikku)" value={susuTotal} unit="L" />{" "}
-            <StatCard title="Omset" value="4.5" unit="Jt" />
+            <StatCard title="Susu (Milikku)" value={susuTotal} unit="L" />
+            <StatCard title="Omset" value="" unit="" />
           </>
         );
 
@@ -147,7 +164,7 @@ export default function ProfileStats() {
           </p>
         </div>
       </div>
-      <div className="flex justify-between gap-3">{renderStatsByRole()}</div>
+      <div className="flex justify-between gap-2.5">{renderStatsByRole()}</div>
     </div>
   );
 }
