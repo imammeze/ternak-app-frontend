@@ -14,6 +14,8 @@ export default function ProfileStats() {
   const [susuTotal, setSusuTotal] = useState<number | string>("...");
   const [susuStock, setSusuStock] = useState<number | string>("...");
 
+  const [jumlahHadir, setJumlahHadir] = useState<number | string>("...");
+
   useEffect(() => {
     setIsClient(true);
 
@@ -67,12 +69,32 @@ export default function ProfileStats() {
             parseFloat((produksiKomersial - totalPengeluaran).toFixed(2)),
           );
         }
+
+        if (role === "karyawan") {
+          const resAbsen = await api.get("/api/absen/histori");
+
+          const now = new Date();
+          const currentMonth = now.getMonth();
+          const currentYear = now.getFullYear();
+
+          const kehadiranBulanIni = resAbsen.data.data.filter((item: any) => {
+            const itemDate = new Date(item.waktu_absen);
+            return (
+              itemDate.getMonth() === currentMonth &&
+              itemDate.getFullYear() === currentYear &&
+              item.tipe === "Masuk"
+            );
+          });
+
+          setJumlahHadir(kehadiranBulanIni.length);
+        }
       } catch (error) {
         console.error("Gagal mengambil data dashboard:", error);
         setUserCount("?");
         setTernakCount("?");
         setSusuTotal("?");
         setSusuStock("?");
+        setJumlahHadir("?");
       }
     };
 
@@ -139,7 +161,7 @@ export default function ProfileStats() {
       case "karyawan":
         return (
           <>
-            <StatCard title="Jumlah Hadir" value="22" unit="Hr" />
+            <StatCard title="Jumlah Hadir" value={jumlahHadir} unit="Hr" />
             <StatCard title="Sisa Libur" value="2" unit="Hr" />
           </>
         );
