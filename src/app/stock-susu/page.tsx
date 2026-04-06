@@ -16,6 +16,7 @@ import {
   Box,
 } from "lucide-react";
 import api from "@/lib/axios";
+import { useAuthStore } from "@/store/authStore";
 
 interface RiwayatStok {
   id: string;
@@ -31,6 +32,8 @@ interface RiwayatStok {
 }
 
 export default function StokSusuPage() {
+  const { user, isAuthenticated } = useAuthStore();
+
   const [riwayat, setRiwayat] = useState<RiwayatStok[]>([]);
   const [stokSaatIni, setStokSaatIni] = useState(0);
   const [totalMasuk, setTotalMasuk] = useState(0);
@@ -43,12 +46,16 @@ export default function StokSusuPage() {
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<"semua" | "masuk" | "keluar">("semua");
 
+  const isStakeholder = user?.roles?.[0]?.name.toLowerCase() === "stakeholder";
+
   useEffect(() => {
     const fetchDataStok = async () => {
       try {
         const [resProduksi, resPengeluaran] = await Promise.all([
           api.get("/api/produksi-susu"),
-          api.get("/api/pengeluaran-susu"),
+          isStakeholder
+            ? Promise.resolve({ data: { data: [] } })
+            : api.get("/api/pengeluaran-susu"),
         ]);
 
         const dataProduksi = resProduksi.data.data;
@@ -148,8 +155,10 @@ export default function StokSusuPage() {
       }
     };
 
-    fetchDataStok();
-  }, []);
+    if (isAuthenticated) {
+      fetchDataStok();
+    }
+  }, [isAuthenticated, user, isStakeholder]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("id-ID", {
