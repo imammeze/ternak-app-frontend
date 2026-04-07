@@ -10,6 +10,7 @@ import {
   BarChart3,
   CalendarCheck,
   Home,
+  ClipboardList,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 
@@ -99,6 +100,13 @@ export default function ActionMenu() {
       href: "/absen",
       icon: CalendarCheck,
       show: hasPermission("akses menu absen"),
+    },
+    {
+      id: "data-kehadiran",
+      label: "Data Kehadiran",
+      href: "/absen/histori",
+      icon: ClipboardList,
+      show: hasRole(["admin", "manager"]),
     },
   ];
 
