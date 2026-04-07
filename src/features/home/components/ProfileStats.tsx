@@ -28,7 +28,12 @@ export default function ProfileStats() {
           setUserCount(resUsers.data.users.length);
         }
 
-        if (role === "admin" || role === "manager" || role === "stakeholder") {
+        if (
+          role === "admin" ||
+          role === "manager" ||
+          role === "stakeholder" ||
+          role === "karyawan"
+        ) {
           const resTernak = await api.get("/api/ternak");
           setTernakCount(resTernak.data.data.length);
 
@@ -56,7 +61,7 @@ export default function ProfileStats() {
           );
 
           let totalPengeluaran = 0;
-          if (role === "admin" || role === "manager") {
+          if (role === "admin" || role === "manager" || role === "karyawan") {
             const resPengeluaran = await api.get("/api/pengeluaran-susu");
             totalPengeluaran = resPengeluaran.data.data.reduce(
               (acc: number, curr: any) => acc + Number(curr.total_liter),
@@ -162,7 +167,7 @@ export default function ProfileStats() {
         return (
           <>
             <StatCard title="Jumlah Hadir" value={jumlahHadir} unit="Hr" />
-            <StatCard title="Sisa Libur" value="2" unit="Hr" />
+            <StatCard title="Stock Susu" value={susuStock} unit="L" />
           </>
         );
 
