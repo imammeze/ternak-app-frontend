@@ -13,6 +13,7 @@ import {
   Milk,
   Baby,
   Activity,
+  Calculator,
 } from "lucide-react";
 import api from "@/lib/axios";
 
@@ -157,7 +158,12 @@ export default function RiwayatSusuPage() {
               const qtyCempe =
                 Number(susu.pagi_cempe_ml || 0) +
                 Number(susu.sore_cempe_ml || 0);
+
               const popTernak = Number(susu.jumlah_ternak || 0);
+              const totalLiter = Number(susu.total_liter || 0);
+
+              const rataRataPerEkor =
+                popTernak > 0 ? (totalLiter / popTernak).toFixed(2) : "0.00";
 
               return (
                 <div
@@ -175,7 +181,7 @@ export default function RiwayatSusuPage() {
                     </div>
                     <div className="bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
                       <span className="font-black text-emerald-700 text-sm">
-                        {Number(susu.total_liter).toFixed(2)} L
+                        {totalLiter.toFixed(2)} L
                       </span>
                     </div>
                   </div>
@@ -235,15 +241,21 @@ export default function RiwayatSusuPage() {
                       </span>
                     </div>
 
-                    {popTernak > 0 && (
-                      <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
-                        <Activity size={14} className="text-purple-500" />
-                        <span>Diperah dari {popTernak} Ekor Ternak</span>
+                    {popTernak >= 0 && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-1.5 bg-purple-50 text-purple-700 px-2 py-1 rounded-md text-[11px] font-bold border border-purple-100">
+                          <Activity size={12} className="text-purple-500" />
+                          {popTernak} Ekor Ternak
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-[11px] font-bold border border-blue-100">
+                          <Calculator size={12} className="text-blue-500" />
+                          Rata-rata: {rataRataPerEkor} L/Ekor
+                        </div>
                       </div>
                     )}
 
                     {susu.petugas && (
-                      <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
+                      <div className="flex items-center gap-2 text-xs font-medium text-gray-500 mt-1">
                         <User size={14} className="text-blue-500" />
                         <span>Petugas: {susu.petugas}</span>
                       </div>
