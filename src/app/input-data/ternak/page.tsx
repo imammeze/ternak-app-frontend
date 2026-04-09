@@ -53,11 +53,8 @@ export default function InputTernakPage() {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const resUsers = await api.get("/api/users");
-        const stakeholderList = resUsers.data.users.filter((u: any) =>
-          u.roles?.some((r: any) => r.name.toLowerCase() === "stakeholder"),
-        );
-        setStakeholders(stakeholderList);
+        const resStakeholders = await api.get("/api/list-stakeholders");
+        setStakeholders(resStakeholders.data);
 
         const resTernak = await api.get("/api/ternak");
         setTernakList(resTernak.data.data);
@@ -242,7 +239,7 @@ export default function InputTernakPage() {
                 <option value="" disabled>
                   -- Pilih Nama --
                 </option>
-                {stakeholders.map((stakeholder) => (
+                {stakeholders?.map((stakeholder) => (
                   <option key={stakeholder.id} value={stakeholder.id}>
                     {stakeholder.name}
                   </option>

@@ -90,7 +90,7 @@ export default function InputPerpindahanPage() {
       await api.get("/sanctum/csrf-cookie");
       await api.post("/api/perpindahan-ternak", formData);
 
-      toast.success("Perpindahan sukses! Lokasi sapi otomatis diperbarui.");
+      toast.success("Perpindahan sukses! Lokasi ternak otomatis diperbarui.");
       router.push("/input-data");
     } catch (err: any) {
       console.error("Gagal memindahkan:", err);
@@ -161,7 +161,7 @@ export default function InputPerpindahanPage() {
                 onChange={handleTernakChange}
                 className="appearance-none bg-transparent text-[15px] font-medium text-gray-800 text-right pr-6 outline-none cursor-pointer z-10 w-48 truncate">
                 <option value="" disabled>
-                  -- Pilih Sapi --
+                  -- Pilih Ternak --
                 </option>
                 {ternakList.map((t) => (
                   <option key={t.id_ternak} value={t.id_ternak}>
@@ -188,7 +188,7 @@ export default function InputPerpindahanPage() {
               name="kandang_awal"
               value={formData.kandang_awal}
               readOnly
-              placeholder="Pilih sapi dulu..."
+              placeholder="Pilih ternak dulu..."
               className="flex-1 text-[15px] text-right font-medium text-gray-500 outline-none bg-transparent ml-4 truncate"
             />
           </div>
