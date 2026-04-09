@@ -15,15 +15,6 @@ import {
 } from "lucide-react";
 import api from "@/lib/axios";
 
-const DAFTAR_AKTIVITAS = [
-  "Pembersihan Kandang",
-  "Pemberian Pakan / Minum",
-  "Pemerahan Susu",
-  "Pengecekan Kesehatan Sapi",
-  "Pencatatan Data Sapi",
-  "Perawatan Fasilitas / Alat",
-];
-
 export default function PresensiKeluarPage() {
   const router = useRouter();
 
@@ -43,6 +34,23 @@ export default function PresensiKeluarPage() {
   const [aktivitas, setAktivitas] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [daftarAktivitas, setDaftarAktivitas] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchAktivitas = async () => {
+      try {
+        const response = await api.get("/api/aktivitas");
+        const aktivitasAktif = response.data.data
+          .filter((item: any) => item.status === "Aktif")
+          .map((item: any) => item.nama_aktivitas);
+
+        setDaftarAktivitas(aktivitasAktif);
+      } catch (err) {
+        console.error("Gagal mengambil daftar aktivitas", err);
+      }
+    };
+    fetchAktivitas();
+  }, []);
 
   useEffect(() => {
     setIsClient(true);
@@ -207,7 +215,7 @@ export default function PresensiKeluarPage() {
             </p>
 
             <div className="flex flex-col gap-2.5">
-              {DAFTAR_AKTIVITAS.map((item) => {
+              {daftarAktivitas.map((item) => {
                 const isSelected = aktivitas.includes(item);
                 return (
                   <label
