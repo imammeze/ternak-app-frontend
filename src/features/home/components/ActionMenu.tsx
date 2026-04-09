@@ -11,6 +11,7 @@ import {
   CalendarCheck,
   Home,
   ClipboardList,
+  ListChecks,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 
@@ -106,6 +107,13 @@ export default function ActionMenu() {
       label: "Data Kehadiran",
       href: "/absen/histori",
       icon: ClipboardList,
+      show: hasRole(["admin", "manager"]),
+    },
+    {
+      id: "manajemen-aktivitas",
+      label: "Aktivitas Absen",
+      href: "/manajemen-aktivitas",
+      icon: ListChecks,
       show: hasRole(["admin", "manager"]),
     },
   ];
