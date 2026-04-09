@@ -141,7 +141,7 @@ export default function InputPengeluaranSusuPage() {
                 placeholder="0"
                 className="text-[15px] font-semibold text-gray-800 text-right outline-none w-16 bg-transparent"
               />
-              <span className="text-[14px] text-gray-400">Botol</span>
+              <span className="text-[14px] text-gray-400">Pcs</span>
             </div>
           </div>
 
@@ -161,7 +161,7 @@ export default function InputPengeluaranSusuPage() {
                 placeholder="0"
                 className="text-[15px] font-semibold text-gray-800 text-right outline-none w-16 bg-transparent"
               />
-              <span className="text-[14px] text-gray-400">Botol</span>
+              <span className="text-[14px] text-gray-400">Pcs</span>
             </div>
           </div>
 
@@ -183,7 +183,6 @@ export default function InputPengeluaranSusuPage() {
               <option value="Penjualan">Penjualan</option>
               <option value="Transfer gudang">Transfer gudang</option>
               <option value="Rusak">Rusak</option>
-              <option value="Cempe">Cempe</option>
               <option value="Tamu">Tamu</option>
             </select>
             <ChevronRight
