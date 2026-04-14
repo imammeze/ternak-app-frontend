@@ -1,6 +1,7 @@
 import Header from "@/shared/components/Header";
 import ProfileStats from "@/features/home/components/ProfileStats";
 import ActionMenu from "@/features/home/components/ActionMenu";
+import AnnouncementBoard from "@/features/home/components/AnnouncementBoard";
 
 export default function Dashboard() {
   return (
@@ -10,6 +11,7 @@ export default function Dashboard() {
       <div className="flex-1 px-6 -mt-12 z-10 pb-28 overflow-y-auto">
         <ProfileStats />
         <ActionMenu />
+        <AnnouncementBoard />
       </div>
     </>
   );
