@@ -18,6 +18,8 @@ import {
   User,
   List,
   BarChart2,
+  Filter,
+  XCircle,
 } from "lucide-react";
 import api from "@/lib/axios";
 import { useAuthStore } from "@/store/authStore";
@@ -43,9 +45,13 @@ export default function HistoriAbsensiPage() {
   const [histori, setHistori] = useState<Absensi[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+
   const [activeTab, setActiveTab] = useState<"riwayat" | "rekapan">("riwayat");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  const [filterBulan, setFilterBulan] = useState("");
+  const [filterTanggal, setFilterTanggal] = useState("");
 
   useEffect(() => {
     setIsClient(true);
@@ -72,8 +78,30 @@ export default function HistoriAbsensiPage() {
   const roleName = user?.roles?.[0]?.name.toLowerCase() || "";
   const isAdminOrManager = ["admin", "manager"].includes(roleName);
 
-  const totalPages = Math.ceil(histori.length / itemsPerPage);
-  const currentData = histori.slice(
+  const filteredHistori = useMemo(() => {
+    return histori.filter((item) => {
+      const dateObj = new Date(item.waktu_absen);
+
+      const itemMonth = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}`;
+      const itemDate = `${itemMonth}-${String(dateObj.getDate()).padStart(2, "0")}`;
+
+      if (filterTanggal) {
+        return itemDate === filterTanggal;
+      }
+      if (filterBulan) {
+        return itemMonth === filterBulan;
+      }
+
+      return true;
+    });
+  }, [histori, filterBulan, filterTanggal]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterBulan, filterTanggal]);
+
+  const totalPages = Math.ceil(filteredHistori.length / itemsPerPage);
+  const currentData = filteredHistori.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
@@ -97,8 +125,8 @@ export default function HistoriAbsensiPage() {
       }
     > = {};
 
-    histori.forEach((item) => {
-      if (!item.user) return; 
+    filteredHistori.forEach((item) => {
+      if (!item.user) return;
       const userId = item.user.id;
 
       if (!result[userId]) {
@@ -122,7 +150,7 @@ export default function HistoriAbsensiPage() {
     });
 
     return Object.values(result).sort((a, b) => a.name.localeCompare(b.name));
-  }, [histori]);
+  }, [filteredHistori]);
 
   const getStyleByType = (tipe: string) => {
     switch (tipe) {
@@ -209,6 +237,48 @@ export default function HistoriAbsensiPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-4">
+            <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-2 mb-2">
+              <div className="bg-gray-50 p-2 rounded-xl text-gray-400 shrink-0">
+                <Filter size={18} />
+              </div>
+
+              <div className="flex-1 flex gap-2">
+                <div className="flex-1">
+                  <input
+                    type="month"
+                    value={filterBulan}
+                    onChange={(e) => {
+                      setFilterBulan(e.target.value);
+                      setFilterTanggal("");
+                    }}
+                    className="w-full text-[12px] font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-2 py-2 outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="date"
+                    value={filterTanggal}
+                    onChange={(e) => {
+                      setFilterTanggal(e.target.value);
+                      setFilterBulan("");
+                    }}
+                    className="w-full text-[12px] font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-2 py-2 outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              {(filterBulan || filterTanggal) && (
+                <button
+                  onClick={() => {
+                    setFilterBulan("");
+                    setFilterTanggal("");
+                  }}
+                  className="p-2 text-rose-500 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors shrink-0">
+                  <XCircle size={18} />
+                </button>
+              )}
+            </div>
+
             {isAdminOrManager ? (
               <>
                 <div className="flex bg-gray-200/50 p-1 rounded-xl mb-2">
@@ -254,91 +324,101 @@ export default function HistoriAbsensiPage() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-100">
-                            {currentData.map((item) => {
-                              const style = getStyleByType(item.tipe);
-                              return (
-                                <tr
-                                  key={item.id}
-                                  className="hover:bg-gray-50 transition-colors">
-                                  <td className="py-3 px-4">
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
-                                        <User
-                                          size={14}
-                                          className="text-gray-500"
-                                        />
+                            {currentData.length === 0 ? (
+                              <tr>
+                                <td
+                                  colSpan={4}
+                                  className="py-8 text-center text-sm font-medium text-gray-400">
+                                  Tidak ada data untuk filter tersebut.
+                                </td>
+                              </tr>
+                            ) : (
+                              currentData.map((item) => {
+                                const style = getStyleByType(item.tipe);
+                                return (
+                                  <tr
+                                    key={item.id}
+                                    className="hover:bg-gray-50 transition-colors">
+                                    <td className="py-3 px-4">
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
+                                          <User
+                                            size={14}
+                                            className="text-gray-500"
+                                          />
+                                        </div>
+                                        <span className="text-sm font-bold text-gray-800 whitespace-nowrap">
+                                          {item.user?.name || "-"}
+                                        </span>
                                       </div>
-                                      <span className="text-sm font-bold text-gray-800 whitespace-nowrap">
-                                        {item.user?.name || "-"}
-                                      </span>
-                                    </div>
-                                  </td>
-                                  <td className="py-3 px-4 whitespace-nowrap">
-                                    <div className="text-sm font-bold text-gray-700">
-                                      {formatTanggal(item.waktu_absen)}
-                                    </div>
-                                    <div className="text-[11px] font-medium text-gray-400">
-                                      {formatJam(item.waktu_absen)} WIB
-                                    </div>
-                                  </td>
-                                  <td className="py-3 px-4 whitespace-nowrap">
-                                    <div className="flex flex-col gap-1.5 items-start">
-                                      <span
-                                        className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold ${style.bg} ${style.color}`}>
-                                        {item.tipe}
-                                      </span>
-
-                                      {item.tipe === "Masuk" &&
-                                        item.status_kehadiran && (
-                                          <span
-                                            className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border ${
-                                              item.status_kehadiran ===
-                                              "Tepat Waktu"
-                                                ? "bg-emerald-50 text-emerald-600 border-emerald-200"
-                                                : "bg-rose-50 text-rose-600 border-rose-200"
-                                            }`}>
-                                            {item.status_kehadiran}
-                                          </span>
-                                        )}
-                                    </div>
-                                  </td>
-                                  <td className="py-3 px-4 min-w-[200px]">
-                                    {item.catatan && (
-                                      <div className="text-[12px] text-gray-600 line-clamp-2 italic">
-                                        "{item.catatan}"
+                                    </td>
+                                    <td className="py-3 px-4 whitespace-nowrap">
+                                      <div className="text-sm font-bold text-gray-700">
+                                        {formatTanggal(item.waktu_absen)}
                                       </div>
-                                    )}
-                                    {item.aktivitas &&
-                                      Array.isArray(item.aktivitas) &&
-                                      item.aktivitas.length > 0 && (
-                                        <div className="flex flex-wrap gap-1 mt-1">
-                                          {item.aktivitas
-                                            .slice(0, 2)
-                                            .map((act, idx) => (
-                                              <span
-                                                key={idx}
-                                                className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[10px] font-medium border border-gray-200">
-                                                {act}
-                                              </span>
-                                            ))}
-                                          {item.aktivitas.length > 2 && (
-                                            <span className="text-[10px] text-gray-400 font-medium">
-                                              +{item.aktivitas.length - 2} lagi
+                                      <div className="text-[11px] font-medium text-gray-400">
+                                        {formatJam(item.waktu_absen)} WIB
+                                      </div>
+                                    </td>
+                                    <td className="py-3 px-4 whitespace-nowrap">
+                                      <div className="flex flex-col gap-1.5 items-start">
+                                        <span
+                                          className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold ${style.bg} ${style.color}`}>
+                                          {item.tipe}
+                                        </span>
+                                        {item.tipe === "Masuk" &&
+                                          item.status_kehadiran && (
+                                            <span
+                                              className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border ${
+                                                item.status_kehadiran ===
+                                                "Tepat Waktu"
+                                                  ? "bg-emerald-50 text-emerald-600 border-emerald-200"
+                                                  : "bg-rose-50 text-rose-600 border-rose-200"
+                                              }`}>
+                                              {item.status_kehadiran}
                                             </span>
                                           )}
+                                      </div>
+                                    </td>
+                                    <td className="py-3 px-4 min-w-[200px]">
+                                      {item.catatan && (
+                                        <div className="text-[12px] text-gray-600 line-clamp-2 italic">
+                                          "{item.catatan}"
                                         </div>
                                       )}
-                                    {!item.catatan &&
-                                      (!item.aktivitas ||
-                                        item.aktivitas.length === 0) && (
-                                        <span className="text-[12px] text-gray-400">
-                                          -
-                                        </span>
-                                      )}
-                                  </td>
-                                </tr>
-                              );
-                            })}
+                                      {item.aktivitas &&
+                                        Array.isArray(item.aktivitas) &&
+                                        item.aktivitas.length > 0 && (
+                                          <div className="flex flex-wrap gap-1 mt-1">
+                                            {item.aktivitas
+                                              .slice(0, 2)
+                                              .map((act, idx) => (
+                                                <span
+                                                  key={idx}
+                                                  className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-[10px] font-medium border border-gray-200">
+                                                  {act}
+                                                </span>
+                                              ))}
+                                            {item.aktivitas.length > 2 && (
+                                              <span className="text-[10px] text-gray-400 font-medium">
+                                                +{item.aktivitas.length - 2}{" "}
+                                                lagi
+                                              </span>
+                                            )}
+                                          </div>
+                                        )}
+                                      {!item.catatan &&
+                                        (!item.aktivitas ||
+                                          item.aktivitas.length === 0) && (
+                                          <span className="text-[12px] text-gray-400">
+                                            -
+                                          </span>
+                                        )}
+                                    </td>
+                                  </tr>
+                                );
+                              })
+                            )}
                           </tbody>
                         </table>
                       </div>
@@ -421,7 +501,7 @@ export default function HistoriAbsensiPage() {
                               <td
                                 colSpan={4}
                                 className="py-8 text-center text-sm font-medium text-gray-400">
-                                Tidak ada data rekap absensi.
+                                Tidak ada data rekap absensi untuk filter ini.
                               </td>
                             </tr>
                           )}
@@ -431,6 +511,12 @@ export default function HistoriAbsensiPage() {
                   </div>
                 )}
               </>
+            ) : currentData.length === 0 ? (
+              <div className="text-center py-10 text-gray-400">
+                <p className="text-sm font-medium">
+                  Tidak ada riwayat untuk filter tersebut.
+                </p>
+              </div>
             ) : (
               currentData.map((item) => {
                 const style = getStyleByType(item.tipe);
