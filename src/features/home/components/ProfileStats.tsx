@@ -15,6 +15,8 @@ export default function ProfileStats() {
   const [susuStock, setSusuStock] = useState<number | string>("...");
 
   const [jumlahHadir, setJumlahHadir] = useState<number | string>("...");
+  const [ontimeCount, setOntimeCount] = useState<number | string>("...");
+  const [lemburCount, setLemburCount] = useState<number | string>("...");
 
   useEffect(() => {
     setIsClient(true);
@@ -91,7 +93,22 @@ export default function ProfileStats() {
             );
           });
 
+          const ontimeBulanIni = kehadiranBulanIni.filter(
+            (item: any) => item.status_kehadiran === "Tepat Waktu",
+          );
+
+          const lemburBulanIni = resAbsen.data.data.filter((item: any) => {
+            const itemDate = new Date(item.waktu_absen);
+            return (
+              itemDate.getMonth() === currentMonth &&
+              itemDate.getFullYear() === currentYear &&
+              item.tipe === "Mulai Lembur"
+            );
+          });
+
           setJumlahHadir(kehadiranBulanIni.length);
+          setOntimeCount(ontimeBulanIni.length);
+          setLemburCount(lemburBulanIni.length);
         }
       } catch (error) {
         console.error("Gagal mengambil data dashboard:", error);
@@ -100,6 +117,8 @@ export default function ProfileStats() {
         setSusuTotal("?");
         setSusuStock("?");
         setJumlahHadir("?");
+        setOntimeCount("?");
+        setLemburCount("?");
       }
     };
 
@@ -166,8 +185,9 @@ export default function ProfileStats() {
       case "karyawan":
         return (
           <>
-            <StatCard title="Jumlah Hadir" value={jumlahHadir} unit="Hr" />
-            <StatCard title="Stock Susu" value={susuStock} unit="L" />
+            <StatCard title="Hadir" value={jumlahHadir} unit="Hr" />
+            <StatCard title="Tepat Waktu" value={ontimeCount} unit="x" />
+            <StatCard title="Menginap" value={lemburCount} unit="x" />
           </>
         );
 
