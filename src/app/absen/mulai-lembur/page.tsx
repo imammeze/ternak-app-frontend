@@ -117,7 +117,7 @@ export default function MulaiLemburPage() {
           <ChevronLeft size={24} />
         </Link>
         <h1 className="text-lg font-semibold ml-2 tracking-wide">
-          Mulai Lembur
+          Mulai Menginap
         </h1>
       </div>
 
@@ -131,7 +131,7 @@ export default function MulaiLemburPage() {
 
         <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col items-center justify-center mb-5 relative overflow-hidden">
           <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2 z-10">
-            Waktu Mulai
+            Waktu Mulai Menginap
           </p>
           <h2 className="text-5xl font-black text-amber-500 tracking-tight z-10 tabular-nums">
             {isClient ? timeString : "--.--.--"}
@@ -180,7 +180,7 @@ export default function MulaiLemburPage() {
             <div className="flex items-center mb-2">
               <FileText size={18} className="text-amber-500 mr-2" />
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                Catatan Persiapan Lembur
+                Catatan Persiapan Menginap
               </label>
             </div>
             <textarea
@@ -203,7 +203,7 @@ export default function MulaiLemburPage() {
             {isSubmitting ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
-              "MULAI LEMBUR"
+              "MULAI MENGINAP"
             )}
           </button>
         </form>

@@ -24,6 +24,7 @@ interface Absensi {
   id: number;
   tipe: string;
   waktu_absen: string;
+  status_kehadiran?: string | null;
   latitude: string;
   longitude: string;
   catatan: string | null;
@@ -213,10 +214,24 @@ export default function HistoriAbsensiPage() {
                               </div>
                             </td>
                             <td className="py-3 px-4 whitespace-nowrap">
-                              <span
-                                className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold ${style.bg} ${style.color}`}>
-                                {item.tipe}
-                              </span>
+                              <div className="flex flex-col gap-1.5 items-start">
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold ${style.bg} ${style.color}`}>
+                                  {item.tipe}
+                                </span>
+
+                                {item.tipe === "Masuk" &&
+                                  item.status_kehadiran && (
+                                    <span
+                                      className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border ${
+                                        item.status_kehadiran === "Tepat Waktu"
+                                          ? "bg-emerald-50 text-emerald-600 border-emerald-200"
+                                          : "bg-rose-50 text-rose-600 border-rose-200"
+                                      }`}>
+                                      {item.status_kehadiran}
+                                    </span>
+                                  )}
+                              </div>
                             </td>
                             <td className="py-3 px-4 min-w-[200px]">
                               {item.catatan && (
@@ -277,12 +292,26 @@ export default function HistoriAbsensiPage() {
                           <IconComponent size={20} />
                         </div>
                         <div>
-                          <h3
-                            className={`font-bold text-[15px] leading-tight ${style.color}`}>
-                            {item.tipe}
-                          </h3>
+                          <div className="flex items-center gap-2">
+                            <h3
+                              className={`font-bold text-[15px] leading-tight ${style.color}`}>
+                              {item.tipe}
+                            </h3>
+
+                            {item.tipe === "Masuk" && item.status_kehadiran && (
+                              <span
+                                className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border ${
+                                  item.status_kehadiran === "Tepat Waktu"
+                                    ? "bg-emerald-50 text-emerald-600 border-emerald-200"
+                                    : "bg-rose-50 text-rose-600 border-rose-200"
+                                }`}>
+                                {item.status_kehadiran}
+                              </span>
+                            )}
+                          </div>
+
                           <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400 mt-1">
-                            <CalendarDays size={12} />{" "}
+                            <CalendarDays size={12} />
                             {formatTanggal(item.waktu_absen)}
                           </div>
                         </div>

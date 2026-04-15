@@ -142,7 +142,7 @@ export default function SelesaiLemburPage() {
           <ChevronLeft size={24} />
         </Link>
         <h1 className="text-lg font-semibold ml-2 tracking-wide">
-          Selesai Lembur
+          Selesai Menginap
         </h1>
       </div>
 
@@ -156,7 +156,7 @@ export default function SelesaiLemburPage() {
 
         <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col items-center justify-center mb-5 relative overflow-hidden">
           <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2 z-10">
-            Waktu Selesai
+            Waktu Selesai Menginap
           </p>
           <h2 className="text-5xl font-black text-orange-600 tracking-tight z-10 tabular-nums">
             {isClient ? timeString : "--.--.--"}
@@ -205,11 +205,11 @@ export default function SelesaiLemburPage() {
             <div className="flex items-center gap-2 mb-3">
               <ListTodo size={20} className="text-orange-500" />
               <h3 className="font-bold text-gray-800 text-sm">
-                Pekerjaan Lembur Diselesaikan
+                Pekerjaan Menginap Diselesaikan
               </h3>
             </div>
             <p className="text-xs text-gray-500 mb-4">
-              Pilih aktivitas lembur yang telah Anda kerjakan (bisa lebih dari
+              Pilih aktivitas menginap yang telah Anda kerjakan (bisa lebih dari
               satu).
             </p>
 
@@ -263,7 +263,7 @@ export default function SelesaiLemburPage() {
             {isSubmitting ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : (
-              "SELESAI LEMBUR"
+              "SELESAI MENGINAP"
             )}
           </button>
         </form>

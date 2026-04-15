@@ -26,13 +26,13 @@ export default function AbsenPage() {
       href: "/absen/keluar",
     },
     {
-      title: "Mulai Lembur",
+      title: "Mulai Menginap",
       icon: Clock,
       iconColor: "text-emerald-500",
       href: "/absen/mulai-lembur",
     },
     {
-      title: "Selesai Lembur",
+      title: "Selesai Menginap",
       icon: TimerOff,
       iconColor: "text-amber-500",
       href: "/absen/selesai-lembur",
