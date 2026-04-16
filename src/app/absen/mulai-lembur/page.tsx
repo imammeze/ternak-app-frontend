@@ -77,7 +77,7 @@ export default function MulaiLemburPage() {
     }
 
     const formData = new FormData();
-    formData.append("tipe", "Mulai Lembur");
+    formData.append("tipe", "Mulai Menginap");
     formData.append("waktu_absen", waktu.toISOString());
     formData.append("latitude", String(lokasi.lat));
     formData.append("longitude", String(lokasi.lng));
@@ -87,7 +87,7 @@ export default function MulaiLemburPage() {
       await api.get("/sanctum/csrf-cookie");
       await api.post("/api/absen/mulai-lembur", formData);
 
-      toast.success("Mulai Lembur Berhasil Dicatat!");
+      toast.success("Mulai Menginap Berhasil Dicatat!");
       router.push("/absen");
     } catch (err: any) {
       console.error("Gagal absen:", err);

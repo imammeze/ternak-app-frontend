@@ -3,7 +3,7 @@ interface RekapData {
   name: string;
   hadir: number;
   ontime: number;
-  lembur: number;
+  menginap: number;
 }
 
 export default function TabelRekapan({ data }: { data: RekapData[] }) {
@@ -23,7 +23,7 @@ export default function TabelRekapan({ data }: { data: RekapData[] }) {
                 Tepat Waktu
               </th>
               <th className="py-3.5 px-4 text-[11px] font-bold uppercase tracking-wider text-center">
-                Lembur
+                Menginap
               </th>
             </tr>
           </thead>
@@ -45,7 +45,7 @@ export default function TabelRekapan({ data }: { data: RekapData[] }) {
                 </td>
                 <td className="py-3.5 px-4 text-center">
                   <span className="text-sm font-black text-purple-600 bg-purple-50 px-2 py-1 rounded-lg">
-                    {rekap.lembur}
+                    {rekap.menginap}
                   </span>
                 </td>
               </tr>

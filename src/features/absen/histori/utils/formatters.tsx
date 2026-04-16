@@ -16,14 +16,14 @@ export const getStyleByType = (tipe: string) => {
         indicator: "bg-rose-400",
         icon: LogOut,
       };
-    case "Mulai Lembur":
+    case "Mulai Menginap":
       return {
         color: "text-purple-500",
         bg: "bg-purple-50",
         indicator: "bg-purple-400",
         icon: Clock,
       };
-    case "Selesai Lembur":
+    case "Selesai Menginap":
       return {
         color: "text-orange-500",
         bg: "bg-orange-50",

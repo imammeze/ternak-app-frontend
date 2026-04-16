@@ -101,7 +101,7 @@ export default function SelesaiLemburPage() {
     }
 
     const payload = {
-      tipe: "Selesai Lembur",
+      tipe: "Selesai Menginap",
       waktu_absen: waktu.toISOString(),
       latitude: String(lokasi.lat),
       longitude: String(lokasi.lng),
@@ -112,7 +112,7 @@ export default function SelesaiLemburPage() {
       await api.get("/sanctum/csrf-cookie");
       await api.post("/api/absen/selesai-lembur", payload);
 
-      toast.success("Selesai Lembur Berhasil! Selamat beristirahat.");
+      toast.success("Selesai Menginap Berhasil! Selamat beristirahat.");
       router.push("/absen");
     } catch (err: any) {
       console.error("Gagal absen:", err);
