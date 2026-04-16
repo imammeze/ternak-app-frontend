@@ -1,23 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import {
   ChevronLeft,
   Plus,
-  Search,
   Info,
-  Droplets,
-  CalendarDays,
-  User,
-  Milk,
-  Baby,
-  Activity,
-  Calculator,
+  List,
+  Table as TableIcon,
+  LineChart,
+  Filter,
+  XCircle,
 } from "lucide-react";
 import api from "@/lib/axios";
 
-interface ProduksiSusu {
+import SummarySusu from "@/features/produksi-susu/components/SummarySusu";
+import ListSusu from "@/features/produksi-susu/components/ListSusu";
+import TabelSusu from "@/features/produksi-susu/components/TabelSusu";
+import GrafikSusu from "@/features/produksi-susu/components/GrafikSusu";
+
+export interface ProduksiSusu {
   id: string;
   tanggal: string;
   kepemilikan: string;
@@ -37,7 +39,12 @@ export default function RiwayatSusuPage() {
   const [susuList, setSusuList] = useState<ProduksiSusu[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+
+  const [activeTab, setActiveTab] = useState<"riwayat" | "tabel" | "grafik">(
+    "riwayat",
+  );
+  const [filterBulan, setFilterBulan] = useState("");
+  const [filterTanggal, setFilterTanggal] = useState("");
 
   useEffect(() => {
     const fetchSusu = async () => {
@@ -51,44 +58,62 @@ export default function RiwayatSusuPage() {
         setLoading(false);
       }
     };
-
     fetchSusu();
   }, []);
 
-  const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    };
-    return new Date(dateString).toLocaleDateString("id-ID", options);
-  };
+  // 1. Logika Filter
+  const filteredSusu = useMemo(() => {
+    return susuList.filter((s) => {
+      const dateObj = new Date(s.tanggal);
+      const itemMonth = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}`;
+      const itemDate = `${itemMonth}-${String(dateObj.getDate()).padStart(2, "0")}`;
 
-  const filteredSusu = susuList.filter((s) => {
-    const query = searchQuery.toLowerCase();
-    const namaPemilik = s.pemilik?.name?.toLowerCase() || "";
-    return (
-      s.tanggal.includes(query) ||
-      s.kepemilikan.toLowerCase().includes(query) ||
-      namaPemilik.includes(query) ||
-      (s.petugas && s.petugas.toLowerCase().includes(query))
-    );
-  });
+      if (filterTanggal) return itemDate === filterTanggal;
+      if (filterBulan) return itemMonth === filterBulan;
+      return true;
+    });
+  }, [susuList, filterBulan, filterTanggal]);
 
+  // 2. Hitung Total Liter
   const totalKeseluruhan = filteredSusu.reduce(
     (acc, curr) => acc + Number(curr.total_liter),
     0,
   );
 
+  // 3. Persiapkan Data Grafik
+  const chartData = useMemo(() => {
+    const grouped: Record<
+      string,
+      { date: string; displayDate: string; total: number }
+    > = {};
+    filteredSusu.forEach((s) => {
+      if (!grouped[s.tanggal]) {
+        grouped[s.tanggal] = {
+          date: s.tanggal,
+          displayDate: new Date(s.tanggal).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "short",
+          }),
+          total: 0,
+        };
+      }
+      grouped[s.tanggal].total += Number(s.total_liter);
+    });
+    return Object.values(grouped).sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
+  }, [filteredSusu]);
+
   return (
     <>
+      {/* HEADER */}
       <div className="flex items-center justify-between px-6 pt-10 pb-4 bg-emerald-600 text-white z-10 sticky top-0 shadow-sm">
         <Link
           href="/"
           className="cursor-pointer bg-white/20 p-2 rounded-full backdrop-blur-md hover:bg-white/30 transition-colors">
           <ChevronLeft size={24} />
         </Link>
-        <h1 className="text-lg font-bold tracking-wide">Riwayat Susu</h1>
+        <h1 className="text-lg font-bold tracking-wide">Data Produksi Susu</h1>
         <Link
           href="/input-data/produksi-susu"
           className="cursor-pointer bg-white/20 p-2 rounded-full backdrop-blur-md hover:bg-white/30 transition-colors">
@@ -96,48 +121,75 @@ export default function RiwayatSusuPage() {
         </Link>
       </div>
 
-      <div className="flex-1 bg-slate-50 px-6 pt-6 pb-32 overflow-y-auto">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center px-4 py-3 mb-6">
-          <Search size={20} className="text-gray-400 mr-3" />
-          <input
-            type="text"
-            placeholder="Cari tanggal, nama, atau petugas..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-sm outline-none text-gray-700 bg-transparent"
-          />
+      <div className="flex-1 bg-slate-50 px-5 pt-6 pb-32 overflow-y-auto">
+        {/* KOTAK FILTER */}
+        <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-2 mb-4">
+          <div className="bg-gray-50 p-2 rounded-xl text-gray-400 shrink-0">
+            <Filter size={18} />
+          </div>
+          <div className="flex-1 flex gap-2">
+            <input
+              type="month"
+              value={filterBulan}
+              onChange={(e) => {
+                setFilterBulan(e.target.value);
+                setFilterTanggal("");
+              }}
+              className="flex-1 text-[12px] font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-2 py-2 outline-none focus:border-emerald-500 transition-colors"
+            />
+            <input
+              type="date"
+              value={filterTanggal}
+              onChange={(e) => {
+                setFilterTanggal(e.target.value);
+                setFilterBulan("");
+              }}
+              className="flex-1 text-[12px] font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-2 py-2 outline-none focus:border-emerald-500 transition-colors"
+            />
+          </div>
+          {(filterBulan || filterTanggal) && (
+            <button
+              onClick={() => {
+                setFilterBulan("");
+                setFilterTanggal("");
+              }}
+              className="p-2 text-rose-500 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors shrink-0">
+              <XCircle size={18} />
+            </button>
+          )}
         </div>
 
-        {!loading && !error && filteredSusu.length > 0 && (
-          <div className="bg-emerald-50 rounded-2xl p-4 mb-6 border border-emerald-100 flex items-center justify-between shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="bg-emerald-500 p-2 rounded-xl text-white">
-                <Milk size={20} />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">
-                  Total Filtered
-                </p>
-                <p className="text-lg font-black text-emerald-800">
-                  {totalKeseluruhan.toFixed(2)} Liter
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">
-                Data
-              </p>
-              <p className="text-lg font-black text-emerald-800">
-                {filteredSusu.length} Hari
-              </p>
-            </div>
-          </div>
+        {/* WIDGET TOTAL (Komponen) */}
+        {!loading && !error && (
+          <SummarySusu
+            totalLiter={totalKeseluruhan}
+            totalRecord={filteredSusu.length}
+          />
         )}
 
+        {/* TABS MENU */}
+        <div className="flex bg-gray-200/50 p-1 rounded-xl mb-5">
+          <button
+            onClick={() => setActiveTab("riwayat")}
+            className={`flex-1 flex justify-center items-center gap-1.5 py-2.5 text-[12px] font-bold rounded-lg transition-all ${activeTab === "riwayat" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500"}`}>
+            <List size={14} /> Riwayat
+          </button>
+          <button
+            onClick={() => setActiveTab("tabel")}
+            className={`flex-1 flex justify-center items-center gap-1.5 py-2.5 text-[12px] font-bold rounded-lg transition-all ${activeTab === "tabel" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500"}`}>
+            <TableIcon size={14} /> Tabel
+          </button>
+          <button
+            onClick={() => setActiveTab("grafik")}
+            className={`flex-1 flex justify-center items-center gap-1.5 py-2.5 text-[12px] font-bold rounded-lg transition-all ${activeTab === "grafik" ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500"}`}>
+            <LineChart size={14} /> Grafik
+          </button>
+        </div>
+
+        {/* RENDER KONTEN BERDASARKAN TAB */}
         {loading ? (
           <div className="flex flex-col items-center justify-center mt-20 text-emerald-600">
             <div className="w-8 h-8 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mb-4"></div>
-            <p className="font-medium text-sm">Memuat riwayat...</p>
           </div>
         ) : error ? (
           <div className="text-center mt-10 text-rose-500 text-sm font-medium">
@@ -146,125 +198,16 @@ export default function RiwayatSusuPage() {
         ) : filteredSusu.length === 0 ? (
           <div className="text-center mt-20 text-gray-500">
             <Info size={40} className="mx-auto mb-3 text-gray-300" />
-            <p className="font-medium text-sm">Belum ada riwayat ditemukan.</p>
+            <p className="font-medium text-sm">
+              Tidak ada data untuk rentang waktu tersebut.
+            </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
-            {filteredSusu.map((susu) => {
-              const qty1L =
-                Number(susu.pagi_1l || 0) + Number(susu.sore_1l || 0);
-              const qty250ml =
-                Number(susu.pagi_250ml || 0) + Number(susu.sore_250ml || 0);
-              const qtyCempe =
-                Number(susu.pagi_cempe_ml || 0) +
-                Number(susu.sore_cempe_ml || 0);
-
-              const popTernak = Number(susu.jumlah_ternak || 0);
-              const totalLiter = Number(susu.total_liter || 0);
-
-              const rataRataPerEkor =
-                popTernak > 0 ? (totalLiter / popTernak).toFixed(2) : "0.00";
-
-              return (
-                <div
-                  key={susu.id}
-                  className="bg-white p-4 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col relative overflow-hidden">
-                  <div
-                    className={`absolute left-0 top-0 bottom-0 w-1.5 ${susu.kepemilikan === "Milik Sendiri" ? "bg-emerald-400" : "bg-amber-400"}`}></div>
-
-                  <div className="flex justify-between items-center ml-2 border-b border-gray-50 pb-3 mb-3">
-                    <div className="flex items-center gap-2 text-gray-700">
-                      <CalendarDays size={18} className="text-emerald-600" />
-                      <span className="font-bold text-sm">
-                        {formatDate(susu.tanggal)}
-                      </span>
-                    </div>
-                    <div className="bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                      <span className="font-black text-emerald-700 text-sm">
-                        {totalLiter.toFixed(2)} L
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="ml-2 mb-3">
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="bg-emerald-50/70 border border-emerald-100 p-2 rounded-xl flex flex-col items-center justify-center">
-                        <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-0.5">
-                          1 Liter
-                        </span>
-                        <span className="text-sm font-black text-emerald-800">
-                          {qty1L}{" "}
-                          <span className="text-[10px] font-bold text-emerald-600">
-                            Pcs
-                          </span>
-                        </span>
-                      </div>
-                      <div className="bg-emerald-50/70 border border-emerald-100 p-2 rounded-xl flex flex-col items-center justify-center">
-                        <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-0.5">
-                          250 ml
-                        </span>
-                        <span className="text-sm font-black text-emerald-800">
-                          {qty250ml}{" "}
-                          <span className="text-[10px] font-bold text-emerald-600">
-                            Pcs
-                          </span>
-                        </span>
-                      </div>
-                      <div className="bg-amber-50 border border-amber-100 p-2 rounded-xl flex flex-col items-center justify-center">
-                        <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-0.5 flex items-center gap-1">
-                          <Baby size={10} /> Cempe
-                        </span>
-                        <span className="text-sm font-black text-amber-800">
-                          {qtyCempe}{" "}
-                          <span className="text-[10px] font-bold text-amber-600">
-                            ml
-                          </span>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="ml-2 flex flex-col gap-2 border-t border-gray-50 pt-2">
-                    <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
-                      <Droplets
-                        size={14}
-                        className={
-                          susu.kepemilikan === "Milik Sendiri"
-                            ? "text-emerald-500"
-                            : "text-amber-500"
-                        }
-                      />
-                      <span>
-                        {susu.kepemilikan === "Milik Sendiri"
-                          ? "Milik Sendiri"
-                          : `Stakeholder: ${susu.pemilik?.name || "Tidak Diketahui"}`}
-                      </span>
-                    </div>
-
-                    {popTernak >= 0 && (
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="flex items-center gap-1.5 bg-purple-50 text-purple-700 px-2 py-1 rounded-md text-[11px] font-bold border border-purple-100">
-                          <Activity size={12} className="text-purple-500" />
-                          {popTernak} Ekor Ternak
-                        </div>
-                        <div className="flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-[11px] font-bold border border-blue-100">
-                          <Calculator size={12} className="text-blue-500" />
-                          Rata-rata: {rataRataPerEkor} L/Ekor
-                        </div>
-                      </div>
-                    )}
-
-                    {susu.petugas && (
-                      <div className="flex items-center gap-2 text-xs font-medium text-gray-500 mt-1">
-                        <User size={14} className="text-blue-500" />
-                        <span>Petugas: {susu.petugas}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <>
+            {activeTab === "riwayat" && <ListSusu data={filteredSusu} />}
+            {activeTab === "tabel" && <TabelSusu data={filteredSusu} />}
+            {activeTab === "grafik" && <GrafikSusu data={chartData} />}
+          </>
         )}
       </div>
     </>
