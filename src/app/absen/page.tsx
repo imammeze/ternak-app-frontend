@@ -9,6 +9,8 @@ import {
   Clock,
   TimerOff,
   AlignJustify,
+  CalendarOff,
+  FileText,
 } from "lucide-react";
 
 export default function AbsenPage() {
@@ -36,6 +38,16 @@ export default function AbsenPage() {
       icon: TimerOff,
       iconColor: "text-amber-500",
       href: "/absen/selesai-lembur",
+    },
+    {
+      title: "Pengajuan Libur",
+      icon: CalendarOff,
+      href: "/absen/pengajuan-libur",
+    },
+    {
+      title: "Riwayat Pengajuan Libur",
+      icon: FileText,
+      href: "/absen/riwayat-libur",
     },
     {
       title: "Histori Absensi",
