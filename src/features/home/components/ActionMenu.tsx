@@ -12,6 +12,8 @@ import {
   Home,
   ClipboardList,
   ListChecks,
+  CalendarOff,
+  CalendarDays,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 
@@ -114,6 +116,20 @@ export default function ActionMenu() {
       label: "Aktivitas Absen",
       href: "/manajemen-aktivitas",
       icon: ListChecks,
+      show: hasRole(["admin", "manager"]),
+    },
+    {
+      id: "pengajuan-libur",
+      label: "Pengajuan Libur",
+      icon: CalendarOff,
+      href: "/absen/riwayat-libur",
+      show: hasRole(["admin", "manager"]),
+    },
+    {
+      id: "kalender",
+      label: "Kalender",
+      icon: CalendarDays,
+      href: "/kalender",
       show: hasRole(["admin", "manager"]),
     },
   ];
